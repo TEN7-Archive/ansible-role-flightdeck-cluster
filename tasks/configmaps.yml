@@ -1,0 +1,19 @@
+---
+- name: Create configmaps
+  k8s:
+    state: "{{ item.state | default('present') }}"
+    definition: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: {{ item.name }}
+      data:
+      {% for _file in item.files %}
+        {{ _file.name }}: {{ '|' }}
+          {{ _file.content | indent(4) }}
+      {% endfor %}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+  loop: "{{ flightdeck_cluster.configMaps | default([]) }}"
+  loop_control:
+    label: "{{ item.name }}_{{ flightdeck_cluster.namespace | default('default') }}"

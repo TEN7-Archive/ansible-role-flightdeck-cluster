@@ -1,0 +1,48 @@
+---
+- name: Create memcache statefulset
+  k8s:
+    state: "{{ flightdeck_cluster.memcache.state | default('present') }}"
+    definition: |
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: memcache
+      spec:
+        selector:
+          matchLabels:
+            app: memcache
+        serviceName: memcache
+        replicas: {{ flightdeck_cluster.memcache.replicas | default('3') }}
+        template:
+          metadata:
+            labels:
+              app: memcache
+          spec:
+            containers:
+              - image: "{{ flightdeck_cluster.memcache.image | default('memcached:1.5-alpine') }}"
+                imagePullPolicy: Always
+                name: "memcache"
+                ports:
+                  - containerPort: 11211
+                    name: memcache
+                    protocol: TCP
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create memcache service
+  k8s:
+    state: "{{ flightdeck_cluster.memcache.state | default('present') }}"
+    definition: |
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: memcache
+      spec:
+        clusterIP: None
+        ports:
+          - name: memcache
+            port: 11211
+            protocol: TCP
+        selector:
+          app: memcache
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"

@@ -1,0 +1,20 @@
+---
+- name: Create namespace
+  include_tasks: 'namespace.yml'
+  when:
+    - flightdeck_cluster.namespace is defined
+    - flightdeck_cluster.namespace != 'default'
+- name: Create secrets
+  include_tasks: 'secrets.yml'
+- name: Create configmaps
+  include_tasks: 'configmaps.yml'
+- name: Create memcache
+  include_tasks: 'memcache.yml'
+  when:
+    - flightdeck_cluster.memcache is defined
+- name: Create web
+  include_tasks: 'web.yml'
+- name: Create ingress
+  include_tasks: 'ingress.yml'
+  when:
+    - flightdeck_cluster.ingress is defined

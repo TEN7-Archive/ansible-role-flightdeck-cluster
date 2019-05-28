@@ -1,0 +1,49 @@
+---
+- name: Create ingress
+  k8s:
+    state: "{{ flightdeck_cluster.ingress.state | default('present') }}"
+    definition: |
+      apiVersion: extensions/v1beta1
+      kind: Ingress
+      metadata:
+        name: "{{ flightdeck_cluster.ingress.name | default('ingress') }}"
+        annotations:
+          ingress.kubernetes.io/app-root: /
+          ingress.kubernetes.io/affinity: cookie
+          ingress.kubernetes.io/enable-cors: "true"
+      spec:
+      {% if flightdeck_cluster.ingress.tls is defined %}
+        tls:
+      {% for _tls in flightdeck_cluster.ingress.tls %}
+          - secretName: "{{ _tls.secret }}"
+      {% if _tls.hosts is defined %}
+            hosts:
+      {% for _host in _tls.hosts %}
+              - "{{ _host }}"
+      {% endfor %}
+      {% endif %}
+      {% endfor %}
+      {% endif %}
+      {% if flightdeck_cluster.ingress.rules %}
+        rules:
+      {% for _rule in flightdeck_cluster.ingress.rules %}
+          - host: "{{ _rule.host }}"
+      {% if _rule.paths is defined %}
+            http:
+              paths:
+      {% for _path in _rule.paths %}
+                - path: "{{ _path.path | default('/') }}"
+                  backend:
+                    serviceName: "{{ _path.backend | default('web') }}"
+                    servicePort: {{ _path.port | default('6081') }}
+      {% endfor %}
+      {% endif %}
+      {% endfor %}
+      {% endif %}
+      {% if flightdeck_cluster.ingress.default is defined %}
+        backend:
+          serviceName: "{{ flightdeck_cluster.ingress.default.backend | default('web') }}"
+          servicePort: {{ flightdeck_cluster.ingress.default.port | default('6081') }}
+      {% endif %}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
