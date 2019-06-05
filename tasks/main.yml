@@ -14,6 +14,8 @@
     - flightdeck_cluster.memcache is defined
 - name: Create web
   include_tasks: 'web.yml'
+  when:
+    - flightdeck_cluster.web is defined
 - name: Create ingress
   include_tasks: 'ingress.yml'
   when:
