@@ -1,0 +1,113 @@
+---
+- name: Create mysql volume
+  k8s:
+    state: "{{ flightdeck_cluster.mysql.state | default('present') }}"
+    definition: |
+      ---
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: mysql
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ flightdeck_cluster.mysql.size | default('10Gi') }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create mysql statefulset
+  k8s:
+    state: "{{ flightdeck_cluster.mysql.state | default('present') }}"
+    definition: |
+      ---
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: mysql
+      spec:
+        selector:
+          matchLabels:
+            app: mysql
+        serviceName: mysql
+        # @todo Set up MySQL replication.
+        # @see https://rancher.com/running-highly-available-wordpress-mysql-kubernetes/
+        replicas: 1
+        template:
+          metadata:
+            labels:
+              app: mysql
+          spec:
+      {% if (flightdeck_cluster.mysql.nodeSelector.key is defined) and (flightdeck_cluster.mysql.nodeSelector.value is defined) %}
+            nodeSelector:
+              {{ flightdeck_cluster.mysql.nodeSelector.key }}: {{ flightdeck_cluster.mysql.nodeSelector.value }}
+      {% endif %}
+            initContainers:
+              # The PVC is owned by root by default. This means that a non-root container
+              # cannot create directories. So, we change the ownership to the UID/GID of
+              # the account under which the database container runs.
+              - name: "fix-pvc-permissions"
+                image: "alpine:3.9"
+                command:
+                  - "sh"
+                  - "-c"
+                  - "chown -R 1000:1000 /var/lib/mysql"
+                volumeMounts:
+                  - mountPath: /var/lib/mysql
+                    name: vol-mysql
+                    subPath: dbdata
+            containers:
+              - name: "db"
+                image: {{ flightdeck_cluster.mysql.image | default('ten7/flight-deck-db:10') }}
+                imagePullPolicy: Always
+                ports:
+                  - containerPort: 3306
+                    name: mysql
+                    protocol: TCP
+                volumeMounts:
+                  - mountPath: /var/lib/mysql
+                    name: vol-mysql
+                    subPath: dbdata
+      {% for _secret in flightdeck_cluster.mysql.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.mysql.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+            volumes:
+              - name: vol-mysql
+                persistentVolumeClaim:
+                  claimName: mysql
+      {% for _secret in flightdeck_cluster.mysql.secrets | default([]) %}
+              - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                secret:
+                  secretName: "{{ _secret.name }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.mysql.configMaps | default([]) %}
+              - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                configMap:
+                  name: "{{ _config.name }}"
+      {% endfor %}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create mysql service
+  k8s:
+    state: "{{ flightdeck_cluster.mysql.state | default('present') }}"
+    definition: |
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: mysql
+      spec:
+        clusterIP: None
+        ports:
+          - name: mysql
+            port: 3306
+            protocol: TCP
+        selector:
+          app: mysql
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"

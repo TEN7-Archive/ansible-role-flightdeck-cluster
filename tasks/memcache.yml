@@ -18,6 +18,10 @@
             labels:
               app: memcache
           spec:
+      {% if (flightdeck_cluster.memcache.nodeSelector.key is defined) and (flightdeck_cluster.memcache.nodeSelector.value is defined) %}
+            nodeSelector:
+              {{ flightdeck_cluster.memcache.nodeSelector.key }}: {{ flightdeck_cluster.memcache.nodeSelector.value }}
+      {% endif %}
             containers:
               - image: "{{ flightdeck_cluster.memcache.image | default('memcached:1.5-alpine') }}"
                 imagePullPolicy: Always

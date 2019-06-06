@@ -22,6 +22,10 @@
             labels:
               app: web
           spec:
+      {% if (flightdeck_cluster.web.nodeSelector.key is defined) and (flightdeck_cluster.web.nodeSelector.value is defined) %}
+            nodeSelector:
+              {{ flightdeck_cluster.web.nodeSelector.key }}: {{ flightdeck_cluster.web.nodeSelector.value }}
+      {% endif %}
             containers:
               - image: {{ flightdeck_cluster.web.image | default('ten7/flight-deck-web:latest') }}
                 imagePullPolicy: Always

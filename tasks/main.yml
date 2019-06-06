@@ -8,6 +8,10 @@
   include_tasks: 'secrets.yml'
 - name: Create configmaps
   include_tasks: 'configmaps.yml'
+- name: Create mysql
+  include_tasks: 'mysql.yml'
+  when:
+    - flightdeck_cluster.mysql is defined
 - name: Create memcache
   include_tasks: 'memcache.yml'
   when:
