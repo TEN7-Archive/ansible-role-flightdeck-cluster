@@ -12,6 +12,10 @@
   include_tasks: 'mysql.yml'
   when:
     - flightdeck_cluster.mysql is defined
+- name: Create tractorbeam
+  include_tasks: 'tractorbeam.yml'
+  when:
+    - flightdeck_cluster.tractorbeam is defined
 - name: Create memcache
   include_tasks: 'memcache.yml'
   when:
