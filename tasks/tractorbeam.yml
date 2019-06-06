@@ -20,6 +20,8 @@
                 containers:
                   - name: tractorbeam
                     image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
+                    command:
+                      - tractorbeam
                     args:
                       - daily
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
@@ -70,6 +72,8 @@
                 containers:
                   - name: tractorbeam
                     image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
+                    command:
+                      - tractorbeam
                     args:
                       - weekly
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
@@ -120,6 +124,8 @@
                 containers:
                   - name: tractorbeam
                     image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
+                    command:
+                      - tractorbeam
                     args:
                       - monthly
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
