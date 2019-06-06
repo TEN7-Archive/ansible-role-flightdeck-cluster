@@ -19,7 +19,7 @@
       {% endif %}
                 containers:
                   - name: tractorbeam
-                    image: "{{ flightdeck_cluster.memcache.image | default('ten7/tractorbeam:latest') }}"
+                    image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
                     args:
                       - daily
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
@@ -69,7 +69,7 @@
       {% endif %}
                 containers:
                   - name: tractorbeam
-                    image: "{{ flightdeck_cluster.memcache.image | default('ten7/tractorbeam:latest') }}"
+                    image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
                     args:
                       - weekly
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
@@ -119,7 +119,7 @@
       {% endif %}
                 containers:
                   - name: tractorbeam
-                    image: "{{ flightdeck_cluster.memcache.image | default('ten7/tractorbeam:latest') }}"
+                    image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
                     args:
                       - monthly
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
