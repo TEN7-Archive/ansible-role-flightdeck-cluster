@@ -38,7 +38,7 @@
             labels:
               app: mysql
           spec:
-      {% if (flightdeck_cluster.mysql.nodeSelector.key is defined) and (flightdeck_cluster.mysql.nodeSelector.value is defined) %}
+      {% if (flightdeck_cluster.mysql.nodeSelector is defined) and (flightdeck_cluster.mysql.nodeSelector.key is defined) and (flightdeck_cluster.mysql.nodeSelector.value is defined) %}
             nodeSelector:
               {{ flightdeck_cluster.mysql.nodeSelector.key }}: {{ flightdeck_cluster.mysql.nodeSelector.value }}
       {% endif %}

@@ -15,7 +15,7 @@
           spec:
             template:
               spec:
-      {% if (flightdeck_cluster.tractorbeam.nodeSelector.key is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.value is defined) %}
+      {% if (flightdeck_cluster.tractorbeam.nodeSelector is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.key is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.value is defined) %}
                 nodeSelector:
                   {{ flightdeck_cluster.tractorbeam.nodeSelector.key }}: {{ flightdeck_cluster.tractorbeam.nodeSelector.value }}
       {% endif %}
@@ -69,7 +69,7 @@
           spec:
             template:
               spec:
-      {% if (flightdeck_cluster.tractorbeam.nodeSelector.key is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.value is defined) %}
+      {% if (flightdeck_cluster.tractorbeam.nodeSelector is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.key is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.value is defined) %}
                 nodeSelector:
                   {{ flightdeck_cluster.tractorbeam.nodeSelector.key }}: {{ flightdeck_cluster.tractorbeam.nodeSelector.value }}
       {% endif %}
@@ -123,7 +123,7 @@
           spec:
             template:
               spec:
-      {% if (flightdeck_cluster.tractorbeam.nodeSelector.key is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.value is defined) %}
+      {% if (flightdeck_cluster.tractorbeam.nodeSelector is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.key is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.value is defined) %}
                 nodeSelector:
                   {{ flightdeck_cluster.tractorbeam.nodeSelector.key }}: {{ flightdeck_cluster.tractorbeam.nodeSelector.value }}
       {% endif %}

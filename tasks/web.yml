@@ -22,7 +22,7 @@
             labels:
               app: web
           spec:
-      {% if (flightdeck_cluster.web.nodeSelector.key is defined) and (flightdeck_cluster.web.nodeSelector.value is defined) %}
+      {% if (flightdeck_cluster.web.nodeSelector is defined) and (flightdeck_cluster.web.nodeSelector.key is defined) and (flightdeck_cluster.web.nodeSelector.value is defined) %}
             nodeSelector:
               {{ flightdeck_cluster.web.nodeSelector.key }}: {{ flightdeck_cluster.web.nodeSelector.value }}
       {% endif %}

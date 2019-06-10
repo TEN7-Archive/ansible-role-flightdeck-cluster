@@ -18,7 +18,7 @@
             labels:
               app: memcache
           spec:
-      {% if (flightdeck_cluster.memcache.nodeSelector.key is defined) and (flightdeck_cluster.memcache.nodeSelector.value is defined) %}
+      {% if (flightdeck_cluster.memcache.nodeSelector is defined) and (flightdeck_cluster.memcache.nodeSelector.key is defined) and (flightdeck_cluster.memcache.nodeSelector.value is defined) %}
             nodeSelector:
               {{ flightdeck_cluster.memcache.nodeSelector.key }}: {{ flightdeck_cluster.memcache.nodeSelector.value }}
       {% endif %}
