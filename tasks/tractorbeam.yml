@@ -9,6 +9,8 @@
         name: tractorbeam-daily
       spec:
         schedule: "{{ flightdeck_cluster.tractorbeam.dailySchedule | default('0 0 * * *') }}"
+        successfulJobsHistoryLimit: 0
+        failedJobsHistoryLimit: 1
         jobTemplate:
           spec:
             template:
@@ -61,6 +63,8 @@
         name: tractorbeam-weekly
       spec:
         schedule: "{{ flightdeck_cluster.tractorbeam.weeklySchedule | default('0 2 * * 0') }}"
+        successfulJobsHistoryLimit: 0
+        failedJobsHistoryLimit: 1
         jobTemplate:
           spec:
             template:
@@ -113,6 +117,8 @@
         name: tractorbeam-monthly
       spec:
         schedule: "{{ flightdeck_cluster.tractorbeam.monthlySchedule | default('0 4 1 * *') }}"
+        successfulJobsHistoryLimit: 0
+        failedJobsHistoryLimit: 1
         jobTemplate:
           spec:
             template:

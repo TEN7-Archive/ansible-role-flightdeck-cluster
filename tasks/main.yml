@@ -28,3 +28,7 @@
   include_tasks: 'ingress.yml'
   when:
     - flightdeck_cluster.ingress is defined
+- name: Create cronjobs
+  include_tasks: 'cron.yml'
+  when:
+    - flightdeck_cluster.cron is defined
