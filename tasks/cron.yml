@@ -15,7 +15,7 @@
           spec:
             template:
               spec:
-      {% if (item.cron.nodeSelector.key is defined) and (item.cron.nodeSelector.value is defined) %}
+      {% if (item.nodeSelector.key is defined) and (item.nodeSelector.value is defined) %}
                 nodeSelector:
                   {{ item.nodeSelector.key }}: {{ item.nodeSelector.value }}
       {% endif %}
