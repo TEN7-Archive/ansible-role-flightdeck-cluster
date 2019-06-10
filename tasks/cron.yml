@@ -46,6 +46,12 @@
       {% endfor %}
       {% endif %}
                 restartPolicy: OnFailure
+      {% if item.imagePullSecrets is defined %}
+            imagePullSecrets:
+      {% for _imagePullSecret in item.imagePullSecrets %}
+              - name: "{{ _imagePullSecret }}"
+      {% endfor %}
+      {% endif %}
       {% if (item.secrets is defined) or (item.configMaps is defined) %}
                 volumes:
       {% for _secret in item.secrets | default([]) %}
