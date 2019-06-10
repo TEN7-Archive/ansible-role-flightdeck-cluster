@@ -88,12 +88,12 @@ flightdeck_cluster:
     replicas: 3
 ```
 
-* **state**: Optional. If the service is `present` or `absent`, defaults to `present`.
+* **state**: Optional. If the service is `present` or `absent`, defaults to `present` when `flightdeck_cluster.web` is defined.
 * **replicas**: Optional, but recommended. The number of web replicas to create. Defaults to 3.
 
 #### Using custom images
 
-By default, the `ten7/flight-deck-web` container is used as the web server. This is the default, but it's not the most useful. To deploy your site, you should use a [private container registry](https://docs.docker.com/registry/deploying/) that includes your site files as part of the image. 
+By default, the `ten7/flight-deck-web` container is used as the web server. This is the default, but it's not the most useful. To deploy your site, you should use a [private container registry](https://docs.docker.com/registry/deploying/) that includes your site files as part of the image.
 
 To do this, define the following:
 
@@ -132,7 +132,7 @@ flightdeck_cluster:
 Where:
 
 * **name** is the name of the secret or config map.
-* **volumeName** is the name of the volume. Optional. Defaults to the secret or config name prefixed by `vol-secet-` or `vol-config-` respectively. 
+* **volumeName** is the name of the volume. Optional. Defaults to the secret or config name prefixed by `vol-secet-` or `vol-config-` respectively.
 * **path** is the parent directory to which to mount the secret or configMap.
 
 #### Configuring Varnish
@@ -152,6 +152,23 @@ Where:
 * **memory** is the amount of memory to allocate to the container. Optional, default is 256MB.
 * **storage** is the amount of disk to allocate for caching. Optional, default is 1GB.
 
+#### Specifying placement
+
+This role can use a node selector to place containers on particular nodes in the cluster using the `nodeSelector` item:
+
+```yaml
+flightdeck_cluster:
+  web:
+    nodeSelector:
+      key: "mylabel"
+      value: "myvalue"
+```
+
+Where:
+
+* **nodeselector.key** is the name of the label to match against nodes.
+* **nodeselector.value** is the label value to match against nodes.
+
 ### The memcache service
 
 The `flightdeck_cluster.memcache` item describes the memcache service to create in the cluster.
@@ -162,19 +179,68 @@ flightdeck_cluster:
     state: present
     replicas: 3
     image: 'memcached:1.5-alpine'
-    
+
 ```
 
 Where:
 
-* **state**: Optional. If the service is `present` or `absent`, defaults to `present`.
+* **state**: Optional. If the service is `present` or `absent`, defaults to `present` when `flightdeck_cluster.memcache` is defined.
 * **replicas**: Optional, but recommended. The number of memcache replicas to create. Defaults to 3.
 * **image**: Optional. The image to use for the memcache service. Defaults to the official memecache image.
+
+### MySQL database
+
+If you do not have an existing MySQL database service, you may choose to use the one provided by this role by defining the `mysql` key:
+
+```yaml
+flightdeck_cluster:
+  mysql:
+    image: "ten7/flight-deck-db:10"
+    size: "10Gi"
+```
+
+Where:
+
+* **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.mysql` is defined.
+* **image** is the image to use. Optional, defaults to `ten7/flight-deck-db:10`.
+* **nodeSelector** is the key/value pair to use to place the pod in the cluster. Optional, works like the `web` service.
+* **size** is the size of the Persistant Volume Claim (PVC).
+* **secrets** are the secrets to mount in the container. Optional. Works like the `web` service.
+* **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.
+
+### Tractorbeam backups
+
+This role has support for adding [tractorbeam](https://github.com/ten7/tractorbeam) backups using the `ten7/tractorbeam` container. Define the `tractorbeam` key:
+
+```yaml
+flightdeck_cluster:
+  tractorbeam:
+    state: present
+    image: "ten7/tractorbeam:latest"
+    dailySchedule: "0 0 * * *"
+    weeklySchedule: "0 2 * * 0"
+    monthlySchedule: "0 4 1 * *"
+    secrets:
+      - name: "my-tractorbeam-yml-secret"
+```
+
+Where:
+
+* **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.tractorbeam` is defined.
+* **image** is the image to use for the backup cronjobs. Optional, defaults to `ten7/tractorbeam:latest`.
+* **nodeSelector** is the key/value pair to use to place the pod in the cluster. Optional, works like the `web` service.
+* **dailySchedule** is the crontab formatted schedule on which to run the daily backup. Optional. Defaults to 12am UTC every day.
+* **weeklySchedule** is the crontab formatted schedule on which to run the weekly backup. Optional. Defaults to 2am URT every Sunday.
+* **monthlySchedule** is the crontab formatted schedule on which to run the monthly backup. Optional. Defaults to 4am UTC on the first of each month.
+* **secrets** are the secrets to mount in the container. Optional. Works like the `web` service.
+* **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.
+
+See the [tractorbeam docs](https://github.com/ten7/tractorbeam) for how to use and configure this service.
 
 ### Configuring Ingress rules
 
 This role provides the ability to manage ingress definitions. It does *not* provide an ingress controller.
- 
+
 To manage the ingress definition, create the `flightdeck_cluster.ingress` item:
 
 ```yaml
@@ -188,7 +254,7 @@ flightdeck_cluster:
             port: "6081"
 ```
 
-The `flightdeck_cluster.ingress.rules` key is a list routing rules for your cluster. 
+The `flightdeck_cluster.ingress.rules` key is a list routing rules for your cluster.
 
 Each item in the list has the following items:
 
@@ -203,9 +269,9 @@ Each item in the `paths` list has the following:
 
 #### HTTPS and certificates
 
-Many ingress controllers will terminate HTTPS, allowing traffic to be unencrypted internally to the cluster. 
+Many ingress controllers will terminate HTTPS, allowing traffic to be unencrypted internally to the cluster.
 
-Certificate chains can be created as secrets then used by defining `flightdeck_cluster.ingress.tls`. 
+Certificate chains can be created as secrets then used by defining `flightdeck_cluster.ingress.tls`.
 
 ```yaml
 flightdeck_cluster:
@@ -220,6 +286,36 @@ Each item under `flightdeck_cluster.ingress.tls` has the following items:
 
 * **secret** is the secret name containing the certificate chain.
 * **hosts** is a list of hosts, including subdomains, for which to use the cert.
+
+### Cron
+
+This role also can leverage Kubernetes cronjobs by using the `cron` key. Unlike many other keys, this one takes one or more items, each with the following format:
+
+```yaml
+cron:
+  - name: "my-cron"
+    schedule: "0 */3 * * *"
+    image: "myRegistry.tld:5000/my_custom_image:tag"
+    command:
+      - "mycommand"
+    args:
+      - "--do=stuff"
+    imagePullSecrets:
+      - "registry"
+    secrets:
+      - name: "dblogin"
+```
+
+Where:
+* **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.tractorbeam` is defined.
+* **image** is the image to use for the backup cronjobs. Optional, defaults to `ten7/tractorbeam:latest`.
+* **nodeSelector** is the key/value pair to use to place the pod in the cluster. Optional, works like the `web` service.
+* **schedule** is the crontab formatted schedule on which to run the job. Required.
+* **command** is the command (entrypoint) to run in the pod. Optional.
+* **args** are the arguments to pass to the command. Optional.
+* **secrets** are the secrets to mount in the container. Optional. Works like the `web` service.
+* **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.
+
 
 ## Dependencies
 
