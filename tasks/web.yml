@@ -85,7 +85,7 @@
       {% endif %}
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
-    wait: "{{ flightdeck_cluster.web.wait | default(no) }}"
+    wait: "{{ flightdeck_cluster.web.wait | default(false) }}"
     wait_condition:
       type: "Available"
       status: yes
