@@ -4,7 +4,7 @@ galaxy_info:
   description: Creates a Flight Deck cluster on Kubernetes
   company: TEN7
   license: GPLv3
-  min_ansible_version: 2.5
+  min_ansible_version: 2.8
   platforms:
     - name: GenericLinux
       versions:
