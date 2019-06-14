@@ -8,9 +8,12 @@
       metadata:
         name: "{{ flightdeck_cluster.ingress.name | default('ingress') }}"
         annotations:
+          # GKE hosted clusters use the following:
           ingress.kubernetes.io/app-root: /
           ingress.kubernetes.io/affinity: cookie
           ingress.kubernetes.io/enable-cors: "true"
+          # Clusters using nginx-igress (DigitalOcean, self-hosted)
+          nginx.ingress.kubernetes.io/enable-cors: "true"
       spec:
       {% if flightdeck_cluster.ingress.tls is defined %}
         tls:
