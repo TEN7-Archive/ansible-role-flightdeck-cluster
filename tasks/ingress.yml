@@ -11,9 +11,12 @@
           # GKE hosted clusters use the following:
           ingress.kubernetes.io/app-root: /
           ingress.kubernetes.io/affinity: cookie
+          # Enable cores
           ingress.kubernetes.io/enable-cors: "true"
-          # Clusters using nginx-igress (DigitalOcean, self-hosted)
           nginx.ingress.kubernetes.io/enable-cors: "true"
+          # Increase the file upload limit
+          ingress.kubernetes.io/proxy-body-size: "{{ flightdeck_cluster.ingress.maxBodySize | default('128m') }}"
+          nginx.ingress.kubernetes.io/proxy-body-size: "{{ flightdeck_cluster.ingress.maxBodySize | default('128m') }}"
       spec:
       {% if flightdeck_cluster.ingress.tls is defined %}
         tls:

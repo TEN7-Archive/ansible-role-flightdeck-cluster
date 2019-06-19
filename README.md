@@ -287,6 +287,16 @@ Each item under `flightdeck_cluster.ingress.tls` has the following items:
 * **secret** is the secret name containing the certificate chain.
 * **hosts** is a list of hosts, including subdomains, for which to use the cert.
 
+#### Tuning ingress
+
+```yaml
+flightdeck_cluster:
+  ingress:
+    maxBodySize: "50m"
+```
+
+* **maxBodySize** is the max HTTP POST size accepted by the ingress. Optional, defaults to `128m`.
+
 ### Cron
 
 This role also can leverage Kubernetes cronjobs by using the `cron` key. Unlike many other keys, this one takes one or more items, each with the following format:
