@@ -297,6 +297,31 @@ flightdeck_cluster:
 
 * **maxBodySize** is the max HTTP POST size accepted by the ingress. Optional, defaults to `128m`.
 
+### Ingress Controller
+
+When self-hosting and on some managed Kubernetes providers, you may require an *ingress controller*. This isn't the same as an ingress *definition* such as above. Instead, this is a load balancer which listens for new ingress definitions. This role relies on the community supported [nginx-ingress controller](https://github.com/kubernetes/ingress-nginx).
+
+Be sure to consult your provider's documentation before creating an ingress controller, as each may have their own preferences on implementation.
+
+To create an ingress controller, define the `ingressController` key:
+
+```yaml
+flightdeck_cluster:
+  ingressController:
+    state: present
+    name: "nginx-ingress"
+    ports:
+      - name: "http"
+        port: "80"
+        targetPort: "http"
+```
+
+Where:
+
+* **state** specifies if the ingress controller is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.ingressController` is defined.
+* **name** is the name of the ingress controller to create. Optional, defaults to `nginx-ingress`.
+* **ports** is a list of external port mappings, including a `name`, the `port` number, and the `targetPort` name. Optional, defaults to exposing the default HTTP and HTTPS ports.
+
 ### Cron
 
 This role also can leverage Kubernetes cronjobs by using the `cron` key. Unlike many other keys, this one takes one or more items, each with the following format:

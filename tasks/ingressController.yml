@@ -1,0 +1,321 @@
+#
+# @see https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
+#
+---
+- name: Create configmap nginx-configuration
+  k8s:
+    state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
+    definition: |
+      kind: ConfigMap
+      apiVersion: v1
+      metadata:
+        name: nginx-configuration
+        labels:
+          app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+          app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create configmap tcp-services
+  k8s:
+    state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
+    definition: |
+      kind: ConfigMap
+      apiVersion: v1
+      metadata:
+        name: tcp-services
+        labels:
+          app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+          app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create configmap udp-services
+  k8s:
+    state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
+    definition: |
+      kind: ConfigMap
+      apiVersion: v1
+      metadata:
+        name: udp-services
+        labels:
+          app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+          app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create ingress service account
+  k8s:
+    state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
+    definition: |
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: nginx-ingress-serviceaccount
+        labels:
+          app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+          app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create ingress cluster role
+  k8s:
+    state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
+    definition: |
+      apiVersion: rbac.authorization.k8s.io/v1beta1
+      kind: ClusterRole
+      metadata:
+        name: nginx-ingress-clusterrole
+        labels:
+          app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+          app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+      rules:
+        - apiGroups:
+            - ""
+          resources:
+            - configmaps
+            - endpoints
+            - nodes
+            - pods
+            - secrets
+          verbs:
+            - list
+            - watch
+        - apiGroups:
+            - ""
+          resources:
+            - nodes
+          verbs:
+            - get
+        - apiGroups:
+            - ""
+          resources:
+            - services
+          verbs:
+            - get
+            - list
+            - watch
+        - apiGroups:
+            - "extensions"
+          resources:
+            - ingresses
+          verbs:
+            - get
+            - list
+            - watch
+        - apiGroups:
+            - ""
+          resources:
+            - events
+          verbs:
+            - create
+            - patch
+        - apiGroups:
+            - "extensions"
+          resources:
+            - ingresses/status
+          verbs:
+            - update
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+- name: Create ingress role
+  k8s:
+    state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
+    definition: |
+      apiVersion: rbac.authorization.k8s.io/v1beta1
+      kind: Role
+      metadata:
+        name: nginx-ingress-role
+        labels:
+          app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+          app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+      rules:
+        - apiGroups:
+            - ""
+          resources:
+            - configmaps
+            - pods
+            - secrets
+            - namespaces
+          verbs:
+            - get
+        - apiGroups:
+            - ""
+          resources:
+            - configmaps
+          resourceNames:
+            # Defaults to "<election-id>-<ingress-class>"
+            # Here: "<ingress-controller-leader>-<nginx>"
+            # This has to be adapted if you change either parameter
+            # when launching the nginx-ingress-controller.
+            - "ingress-controller-leader-nginx"
+          verbs:
+            - get
+            - update
+        - apiGroups:
+            - ""
+          resources:
+            - configmaps
+          verbs:
+            - create
+        - apiGroups:
+            - ""
+          resources:
+            - endpoints
+          verbs:
+            - get
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create ingress role binding
+  k8s:
+    state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
+    definition: |
+      apiVersion: rbac.authorization.k8s.io/v1beta1
+      kind: RoleBinding
+      metadata:
+        name: nginx-ingress-role-nisa-binding
+        labels:
+          app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+          app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: Role
+        name: nginx-ingress-role
+      subjects:
+        - kind: ServiceAccount
+          name: nginx-ingress-serviceaccount
+          namespace: {{ flightdeck_cluster.namespace | default('default') }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create ingress cluster role binding
+  k8s:
+    state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
+    definition: |
+      apiVersion: rbac.authorization.k8s.io/v1beta1
+      kind: ClusterRoleBinding
+      metadata:
+        name: nginx-ingress-clusterrole-nisa-binding
+        labels:
+          app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+          app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: nginx-ingress-clusterrole
+      subjects:
+        - kind: ServiceAccount
+          name: nginx-ingress-serviceaccount
+          namespace: {{ flightdeck_cluster.namespace | default('default') }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+- name: Create ingress deployment
+  k8s:
+    state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
+    definition: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+        labels:
+          app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+          app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+            app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+        template:
+          metadata:
+            labels:
+              app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+              app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+            annotations:
+              prometheus.io/port: "10254"
+              prometheus.io/scrape: "true"
+          spec:
+            serviceAccountName: nginx-ingress-serviceaccount
+            containers:
+              - name: nginx-ingress-controller
+                image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.23.0
+                args:
+                  - /nginx-ingress-controller
+                  - --configmap=$(POD_NAMESPACE)/nginx-configuration
+                  - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
+                  - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
+                  - --publish-service=$(POD_NAMESPACE)/{{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+                  - --annotations-prefix=nginx.ingress.kubernetes.io
+                securityContext:
+                  allowPrivilegeEscalation: true
+                  capabilities:
+                    drop:
+                      - ALL
+                    add:
+                      - NET_BIND_SERVICE
+                  # www-data -> 33
+                  runAsUser: 33
+                env:
+                  - name: POD_NAME
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: metadata.name
+                  - name: POD_NAMESPACE
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: metadata.namespace
+                ports:
+                  - name: http
+                    containerPort: 80
+                  - name: https
+                    containerPort: 443
+                livenessProbe:
+                  failureThreshold: 3
+                  httpGet:
+                    path: /healthz
+                    port: 10254
+                    scheme: HTTP
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  successThreshold: 1
+                  timeoutSeconds: 10
+                readinessProbe:
+                  failureThreshold: 3
+                  httpGet:
+                    path: /healthz
+                    port: 10254
+                    scheme: HTTP
+                  periodSeconds: 10
+                  successThreshold: 1
+                  timeoutSeconds: 10
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+#
+# @see https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/cloud-generic.yaml
+#
+- name: Create ingress service
+  k8s:
+    state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
+    definition: |
+      kind: Service
+      apiVersion: v1
+      metadata:
+        name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+        labels:
+          app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+          app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+      spec:
+        externalTrafficPolicy: Local
+        type: LoadBalancer
+        selector:
+          app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+          app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+        ports:
+      {% for _port in flightdeck_cluster.ingressController.ports | default(_default_ports) %}
+          - name: {{ _port.name }}
+            port: {{ _port.port }}
+            targetPort: {{ _port.targetPort }}
+      {% endfor %}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+  vars:
+    _default_ports:
+      - name: "http"
+        port: "80"
+        targetPort: "http"
+      - name: "https"
+        port: "443"
+        targetPort: "https"
