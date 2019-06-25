@@ -53,16 +53,16 @@
       {% endfor %}
       {% endif %}
       {% if (item.secrets is defined) or (item.configMaps is defined) %}
-                volumes:
+            volumes:
       {% for _secret in item.secrets | default([]) %}
-                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
-                    secret:
-                      secretName: "{{ _secret.name }}"
+              - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                secret:
+                  secretName: "{{ _secret.name }}"
       {% endfor %}
       {% for _config in item.configMaps | default([]) %}
-                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
-                    configMap:
-                      name: "{{ _config.name }}"
+              - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                configMap:
+                  name: "{{ _config.name }}"
       {% endfor %}
       {% endif %}
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
