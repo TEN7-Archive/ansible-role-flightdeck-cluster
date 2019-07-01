@@ -1,0 +1,52 @@
+---
+- name: Create solr statefulset
+  k8s:
+    state: "{{ flightdeck_cluster.solr.state | default('present') }}"
+    definition: |
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: solr
+      spec:
+        selector:
+          matchLabels:
+            app: solr
+        serviceName: solr
+        replicas: {{ flightdeck_cluster.solr.replicas | default('1') }}
+        template:
+          metadata:
+            labels:
+              app: solr
+          spec:
+      {% if (flightdeck_cluster.solr.nodeSelector is defined) and (flightdeck_cluster.solr.nodeSelector.key is defined) and (flightdeck_cluster.solr.nodeSelector.value is defined) %}
+            nodeSelector:
+              {{ flightdeck_cluster.solr.nodeSelector.key }}: {{ flightdeck_cluster.solr.nodeSelector.value }}
+      {% endif %}
+            containers:
+              - image: "{{ flightdeck_cluster.solr.image | default('ten7/flight-deck-solr:6') }}"
+                imagePullPolicy: Always
+                name: "solr"
+                ports:
+                  - containerPort: 8983
+                    name: solr
+                    protocol: TCP
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create solr service
+  k8s:
+    state: "{{ flightdeck_cluster.solr.state | default('present') }}"
+    definition: |
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: solr
+      spec:
+        clusterIP: None
+        ports:
+          - name: solr
+            port: 8983
+            protocol: TCP
+        selector:
+          app: solr
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"

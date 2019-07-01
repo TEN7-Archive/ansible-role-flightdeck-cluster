@@ -20,6 +20,10 @@
   include_tasks: 'memcache.yml'
   when:
     - flightdeck_cluster.memcache is defined
+- name: Work with solr
+  include_tasks: 'solr.yml'
+  when:
+    - flightdeck_cluster.solr is defined
 - name: Work with web
   include_tasks: 'web.yml'
   when:
