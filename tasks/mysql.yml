@@ -1,21 +1,4 @@
 ---
-- name: Create mysql volume
-  k8s:
-    state: "{{ flightdeck_cluster.mysql.state | default('present') }}"
-    definition: |
-      ---
-      apiVersion: v1
-      kind: PersistentVolumeClaim
-      metadata:
-        name: mysql
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: {{ flightdeck_cluster.mysql.size | default('10Gi') }}
-    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
-    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
 - name: Create mysql statefulset
   k8s:
     state: "{{ flightdeck_cluster.mysql.state | default('present') }}"
@@ -90,6 +73,18 @@
                 configMap:
                   name: "{{ _config.name }}"
       {% endfor %}
+        volumeClaimTemplates:
+          - metadata:
+              name: vol-mysql
+            spec:
+              accessModes:
+                - ReadWriteOnce
+      {% if flightdeck_cluster.mysql.storageClass is defined %}
+              storageClassName: "{{ flightdeck_cluster.mysql.storageClass }}"
+      {% endif %}
+              resources:
+                requests:
+                  storage: {{ flightdeck_cluster.mysql.size | default('10Gi') }}
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
 - name: Create mysql service
