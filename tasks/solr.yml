@@ -22,6 +22,20 @@
             nodeSelector:
               {{ flightdeck_cluster.solr.nodeSelector.key }}: {{ flightdeck_cluster.solr.nodeSelector.value }}
       {% endif %}
+            initContainers:
+              # The PV is owned by root by default. This means that a non-root container
+              # cannot create directories. So, we change the ownership to the UID/GID of
+              # the account under which the database container runs.
+              - name: "fix-pvc-permissions"
+                image: "alpine:3.9"
+                command:
+                  - "sh"
+                  - "-c"
+                  - "chown -R 1000:1000 /data"
+                volumeMounts:
+                  - name: "vol-solr"
+                    mountPath: "/data"
+                    subPath: "solr-data"
             containers:
               - image: "{{ flightdeck_cluster.solr.image | default('ten7/flight-deck-solr:6') }}"
                 imagePullPolicy: Always
@@ -30,8 +44,10 @@
                   - containerPort: 8983
                     name: solr
                     protocol: TCP
-      {% if (flightdeck_cluster.solr.secrets is defined) or (flightdeck_cluster.solr.configMaps is defined) %}
                 volumeMounts:
+                  - name: "vol-solr"
+                    mountPath: "/data"
+                    subPath: "solr-data"
       {% for _secret in flightdeck_cluster.solr.secrets | default([]) %}
                   - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                     mountPath: "{{ _secret.path | default('/secrets') }}"
@@ -40,7 +56,6 @@
                   - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
                     mountPath: "{{ _config.path | default('/config') }}"
       {% endfor %}
-      {% endif %}
       {% if (flightdeck_cluster.solr.secrets is defined) or (flightdeck_cluster.solr.configMaps is defined) %}
             volumes:
       {% for _secret in flightdeck_cluster.solr.secrets | default([]) %}
@@ -54,6 +69,18 @@
                   name: "{{ _config.name }}"
       {% endfor %}
       {% endif %}
+        volumeClaimTemplates:
+          - metadata:
+              name: vol-solr
+            spec:
+              accessModes:
+                - ReadWriteOnce
+      {% if flightdeck_cluster.solr.storageClass is defined %}
+              storageClassName: "{{ flightdeck_cluster.solr.storageClass }}"
+      {% endif %}
+              resources:
+                requests:
+                  storage: {{ flightdeck_cluster.solr.size | default('10Gi') }}
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
 - name: Create solr service
