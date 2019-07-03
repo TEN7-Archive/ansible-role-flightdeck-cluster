@@ -19,6 +19,7 @@
     - "{{ flightdeck_cluster.web.delete | default(false) | bool }}"
 # @see https://github.com/ansible/ansible/issues/42302
 - name: Delete orphaned web pods
+  k8s:
     state: absent
     api_version: "extensions/v1beta1"
     kind: "pod"
