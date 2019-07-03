@@ -3,7 +3,7 @@
   set_fact:
     _pod_list: "{{ lookup('k8s', kind='Pod', namespace=flightdeck_cluster.namespace, label_selector='app=web', kubeconfig=_kubeconfig_path) }}"
   when:
-    - "{{ flightdeck_cluster.web.delete | default(false) | bool }}"
+    - flightdeck_cluster.web.delete | default(false) | bool
   vars:
     _kubeconfig_path: "{{ flightdeck_cluster_kubeconfig | default('') }}"
 - name: Delete the existing web deployment
@@ -16,7 +16,7 @@
     wait: "{{ flightdeck_cluster.web.wait | default(false) }}"
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
   when:
-    - "{{ flightdeck_cluster.web.delete | default(false) | bool }}"
+    - flightdeck_cluster.web.delete | default(false) | bool
 # @see https://github.com/ansible/ansible/issues/42302
 - name: Delete orphaned web pods
   k8s:
@@ -29,7 +29,7 @@
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
   loop: "{{ _pod_list }}"
   when:
-    - "{{ flightdeck_cluster.web.delete | default(false) | bool }}"
+    - flightdeck_cluster.web.delete | default(false) | bool
 - name: Create web deployment
   k8s:
     state: "{{ flightdeck_cluster.web.state | default('present') }}"
