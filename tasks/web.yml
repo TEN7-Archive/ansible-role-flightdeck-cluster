@@ -1,7 +1,7 @@
 ---
 - name: Get web pods
   set_fact:
-    _pod_list: "{{ lookup('k8s', kind='Pod', namespace=flightdeck_cluster.namespace, label_selector='app=web', kubeconfig=_kubeconfig_path) }}"
+    _pod_list: "{{ lookup('k8s', kind='Pod', namespace=flightdeck_cluster.namespace, label_selector='app=web', kubeconfig=_kubeconfig_path, wantlist=True) }}"
   when:
     - flightdeck_cluster.web.delete | default(false) | bool
   vars:
