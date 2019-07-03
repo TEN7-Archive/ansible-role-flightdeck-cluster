@@ -21,7 +21,7 @@
 - name: Delete orphaned web pods
   k8s:
     state: absent
-    api_version: "extensions/v1beta1"
+    api_version: "v1"
     kind: "pod"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
     name: "{{ item.metadata.name }}"
