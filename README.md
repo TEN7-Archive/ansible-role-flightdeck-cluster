@@ -204,7 +204,7 @@ Where:
 * **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.mysql` is defined.
 * **image** is the image to use. Optional, defaults to `ten7/flight-deck-db:10`.
 * **nodeSelector** is the key/value pair to use to place the pod in the cluster. Optional, works like the `web` service.
-* **size** is the size of the Persistant Volume Claim (PVC).
+* **size** is the size of the Persistent Volume to attach to the service.
 * **secrets** are the secrets to mount in the container. Optional. Works like the `web` service.
 * **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.
 
@@ -236,6 +236,91 @@ Where:
 * **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.
 
 See the [tractorbeam docs](https://github.com/ten7/tractorbeam) for how to use and configure this service.
+
+### Solr
+
+You can provision a Solr image using this role. To enable, create the `flightdeck_cluster.solr` item:
+
+```yaml
+flightdeck_cluster:
+  solr:
+    state: present
+    image: "ten7/flight-deck-solr:6"
+    nodeSelector:
+      key: "app"
+      value: "search"
+    size: "10Gi"
+```
+
+Where:
+
+* **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.solr` is defined.
+* **image** is the image to use for the Solr container. Optional, defaults to `ten7/flight-deck-solr:6`.
+* **nodeSelector** is the key/value pair to use to place the pod in the cluster. Optional, works like the `web` service.
+* **size** is the size of Persistent Volume to attach to the Solr container.
+* **secrets** are the secrets to mount in the container. Optional. Works like the `web` service.
+* **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.
+
+### Cert Manager for Let's Encrypt
+
+This role also can provision [Cert Manager](https://docs.cert-manager.io/en/latest/index.html) with [Let's Encrypt](https://letsencrypt.org/) support. The Cert Manager will auto-renew provisioned certificates.
+
+```yaml
+flightdeck_cluster:
+  certManager:
+    state: present
+```
+
+Where:
+
+* **state** specifies if the ingress controller is `present` or `absent`. Optional, defaults to `absent` when `flightdeck_cluster.certManager` is defined.
+
+#### Issuers
+
+This alone does not enable Let's Encrypt. To do that, you need to define one or more "issuers" under the `letsEncrypt` item:
+
+```yaml
+flightdeck_cluster:
+  certManager:
+    state: present
+    letsEncrypt:
+      - name: "my-lets-encrypt-prod-issuer"
+        email: "ops@Example.com"
+        secret: "lets-encrypt-private-key"
+        server: "https://acme-v02.api.letsencrypt.org/directory"
+```
+
+Where:
+
+* **name** is the name of the issuer to use internally. Required.
+* **email** is the email address to use for the issuer. Required.
+* **secret** is the secret name to use to store the private key. The secret will be automatically created if it doesn't exist. Optional. Defaults to the issuer name.
+* **server** The Let's Encrypt API server to use to provision certificates. Optional, defaults to the prod server. Use `https://acme-staging-v02.api.letsencrypt.org/directory` for creating staging and testing domains.
+
+Having multiple issuers allows you to segment notification emails, as well as use different API servers depending on use.
+
+#### Namespaces and Cert Manager
+
+Ideally, you shouldn't use the same namespace for Cert Manager as you do your other cluster services. Instead, create a play to define the cert manager in its own namespace using `include_role`, using `vars` to override key values at the play level:
+
+```yaml
+- name: Create the cert-manager
+  include_role:
+    name: "ten7.flightdeck_cluster"
+  vars:
+    flightdeck_cluster_kubeconfig: "/path/to/my/kubectl.yaml"
+    flightdeck_cluster:
+      namespace: "cert-manager"
+      certManager:
+        state: present
+        letsEncrypt:
+          - name: "my-lets-encrypt-prod-issuer"
+            email: "ops@Example.com"
+            secret: "lets-encrypt-private-key"
+            server: "https://acme-v02.api.letsencrypt.org/directory"
+```
+
+Alternatively, create a separate playbook entirely to deploy Cert Manager.
 
 ### Configuring Ingress rules
 
@@ -286,6 +371,22 @@ Each item under `flightdeck_cluster.ingress.tls` has the following items:
 
 * **secret** is the secret name containing the certificate chain.
 * **hosts** is a list of hosts, including subdomains, for which to use the cert.
+
+#### Using Cert Manager for Let's Encrypt
+
+If you've defined `flightdeck_cluster.certManager` and configured one or more Let's Encrypt issuers, you can use them to provision non-wildcard certificates:
+
+```yaml
+flightdeck_cluster:
+  ingress:
+    tlsIssuer: "my-lets-encrypt-prod-issuer"
+    tls:
+      - secret: "lets-encrypt-private-key"
+        hosts:
+          - "example.com"
+```
+
+The `tlsIssuer` item instructs the ingress defition to use an issuer you created in `flightdeck_cluster.certManager.letsEncrypt`. The `secret` for each `tls` item must match the secret name for the given issuer. Note, that if you didn't define a `secret` for the issuer, the issuer name is used by default.
 
 #### Tuning ingress
 
@@ -350,7 +451,6 @@ Where:
 * **args** are the arguments to pass to the command. Optional.
 * **secrets** are the secrets to mount in the container. Optional. Works like the `web` service.
 * **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.
-
 
 ## Dependencies
 
