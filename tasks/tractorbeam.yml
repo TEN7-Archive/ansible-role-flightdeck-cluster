@@ -22,6 +22,7 @@
                 containers:
                   - name: tractorbeam
                     image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
+                    imagePullPolicy: Always
                     command:
                       - tractorbeam
                     args:
@@ -76,6 +77,7 @@
                 containers:
                   - name: tractorbeam
                     image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
+                    imagePullPolicy: Always
                     command:
                       - tractorbeam
                     args:
@@ -130,6 +132,7 @@
                 containers:
                   - name: tractorbeam
                     image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
+                    imagePullPolicy: Always
                     command:
                       - tractorbeam
                     args:
