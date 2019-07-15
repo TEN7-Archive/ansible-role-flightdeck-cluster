@@ -95,6 +95,16 @@
                     value: "{{ flightdeck_cluster.web.varnish.memory | default('256M') }}"
                   - name: "VARNISH_STORAGE_SIZE"
                     value: "{{ flightdeck_cluster.web.varnish.storage | default('1024M') }}"
+      {% if (flightdeck_cluster.web.secrets is defined) or (flightdeck_cluster.web.configMaps is defined) %}
+                volumeMounts:
+      {% for _secret in flightdeck_cluster.web.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.web.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
       {% if flightdeck_cluster.web.imagePullSecrets is defined %}
             imagePullSecrets:
       {% for _imagePullSecret in flightdeck_cluster.web.imagePullSecrets %}
