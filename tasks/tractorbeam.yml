@@ -1,4 +1,27 @@
 ---
+- name: Create tractorbeam volumes
+  k8s:
+    state: "{{ flightdeck_cluster.tractorbeam.state | default('present') }}"
+    definition: |
+      ---
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: {{ item }}
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ flightdeck_cluster.tractorbeam.size }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+  when:
+    - flightdeck_cluster.tractorbeam.size is defined
+  loop:
+    - "tractorbeam-cache-daily"
+    - "tractorbeam-cache-weekly"
+    - "tractorbeam-cache-monthly"
 - name: Create tractorbeam daily cron
   k8s:
     state: "{{ flightdeck_cluster.tractorbeam.state | default('present') }}"
@@ -11,6 +34,7 @@
         schedule: "{{ flightdeck_cluster.tractorbeam.dailySchedule | default('0 0 * * *') }}"
         successfulJobsHistoryLimit: 0
         failedJobsHistoryLimit: 1
+        concurrencyPolicy: Forbid
         jobTemplate:
           spec:
             template:
@@ -19,6 +43,10 @@
                 nodeSelector:
                   {{ flightdeck_cluster.tractorbeam.nodeSelector.key }}: {{ flightdeck_cluster.tractorbeam.nodeSelector.value }}
       {% endif %}
+                securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                  fsGroup: 2000
                 containers:
                   - name: tractorbeam
                     image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
@@ -27,8 +55,13 @@
                       - tractorbeam
                     args:
                       - daily
-      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                     volumeMounts:
+      {% if flightdeck_cluster.tractorbeam.size is defined %}
+                      - mountPath: /backup
+                        name: vol-tractorbeam-cache
+                        subPath: tractorbeam
+      {% endif %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                       - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                         mountPath: "{{ _secret.path | default('/secrets') }}"
@@ -39,8 +72,13 @@
       {% endfor %}
       {% endif %}
                 restartPolicy: OnFailure
-      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                 volumes:
+      {% if flightdeck_cluster.tractorbeam.size is defined %}
+                  - name: vol-tractorbeam-cache
+                    persistentVolumeClaim:
+                      claimName: tractorbeam-cache-daily
+      {% endif %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                   - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                     secret:
@@ -66,6 +104,7 @@
         schedule: "{{ flightdeck_cluster.tractorbeam.weeklySchedule | default('0 2 * * 0') }}"
         successfulJobsHistoryLimit: 0
         failedJobsHistoryLimit: 1
+        concurrencyPolicy: Forbid
         jobTemplate:
           spec:
             template:
@@ -74,6 +113,10 @@
                 nodeSelector:
                   {{ flightdeck_cluster.tractorbeam.nodeSelector.key }}: {{ flightdeck_cluster.tractorbeam.nodeSelector.value }}
       {% endif %}
+                securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                  fsGroup: 2000
                 containers:
                   - name: tractorbeam
                     image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
@@ -82,8 +125,13 @@
                       - tractorbeam
                     args:
                       - weekly
-      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                     volumeMounts:
+      {% if flightdeck_cluster.tractorbeam.size is defined %}
+                      - mountPath: /backup
+                        name: vol-tractorbeam-cache
+                        subPath: tractorbeam
+      {% endif %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                       - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                         mountPath: "{{ _secret.path | default('/secrets') }}"
@@ -94,8 +142,13 @@
       {% endfor %}
       {% endif %}
                 restartPolicy: OnFailure
-      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                 volumes:
+      {% if flightdeck_cluster.tractorbeam.size is defined %}
+                  - name: vol-tractorbeam-cache
+                    persistentVolumeClaim:
+                      claimName: tractorbeam-cache-weekly
+      {% endif %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                   - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                     secret:
@@ -121,6 +174,7 @@
         schedule: "{{ flightdeck_cluster.tractorbeam.monthlySchedule | default('0 4 1 * *') }}"
         successfulJobsHistoryLimit: 0
         failedJobsHistoryLimit: 1
+        concurrencyPolicy: Forbid
         jobTemplate:
           spec:
             template:
@@ -129,6 +183,10 @@
                 nodeSelector:
                   {{ flightdeck_cluster.tractorbeam.nodeSelector.key }}: {{ flightdeck_cluster.tractorbeam.nodeSelector.value }}
       {% endif %}
+                securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                  fsGroup: 2000
                 containers:
                   - name: tractorbeam
                     image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
@@ -137,8 +195,13 @@
                       - tractorbeam
                     args:
                       - monthly
-      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                     volumeMounts:
+      {% if flightdeck_cluster.tractorbeam.size is defined %}
+                      - mountPath: /backup
+                        name: vol-tractorbeam-cache
+                        subPath: tractorbeam
+      {% endif %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                       - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                         mountPath: "{{ _secret.path | default('/secrets') }}"
@@ -149,8 +212,13 @@
       {% endfor %}
       {% endif %}
                 restartPolicy: OnFailure
-      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) %}
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                 volumes:
+      {% if flightdeck_cluster.tractorbeam.size is defined %}
+                  - name: vol-tractorbeam-cache
+                    persistentVolumeClaim:
+                      claimName: tractorbeam-cache-monthly
+      {% endif %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                   - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                     secret:
