@@ -77,6 +77,33 @@ flightdeck_cluster:
             bind-address: 0.0.0.0
 ```
 
+Sometimes you have an entire directory of configuration you need to import as a configMap. In that case, you can use the *fileglob* form:
+
+```yaml
+flightdeck_cluster:
+  configMaps:
+    - name: "solr-config"
+      fileglob: "path/to/my/solr-conf/*"
+```
+
+The **fileglob** item is subject to the following rules:
+
+* The path can be absolute or relative. If relative, it is relative to the Ansible playbook from which `flightdeck_cluster` is run.
+* Only files within the directory are read, subdirectories are ignored.
+* The `*` wildcard is supported, but only for the filename, not paths.
+* All matched files will be added to the configMap.
+
+If you need subdirectories, define multiple **fileglob** configMaps:
+
+```yaml
+flightdeck_cluster:
+  configMaps:
+    - name: "solr-config"
+      fileglob: "path/to/my/solr-conf/*"
+    - name: "solr-lang"
+      fileglob: "path/to/my/solr-conf/lang/*"
+```
+
 ### The web service
 
 The web service combines the Flight Deck web container and the varnish container into a single pod.

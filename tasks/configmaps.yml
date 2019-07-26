@@ -8,10 +8,17 @@
       metadata:
         name: {{ item.name }}
       data:
+      {% if item.files is defined %}
       {% for _file in item.files %}
         {{ _file.name }}: {{ '|' }}
           {{ _file.content | indent(4) }}
       {% endfor %}
+      {% elif item.fileglob is defined %}
+      {% for _file in lookup('fileglob', item.fileglob, wantlist=True) %}
+        {{ _file | basename }}: {{ '|' }}
+          {{ lookup('file', _file) | indent(4) }}
+      {% endfor %}
+      {% endif %}
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
   loop: "{{ flightdeck_cluster.configMaps | default([]) }}"
