@@ -14,6 +14,7 @@
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
     name: "web"
     wait: "{{ flightdeck_cluster.web.wait | default(false) }}"
+    wait_timeout: "{{ flightdeck_cluster.web.timeout | default(omit) }}"
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
   when:
     - flightdeck_cluster.web.delete | default(false) | bool
@@ -26,6 +27,7 @@
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
     name: "{{ item.metadata.name }}"
     wait: "{{ flightdeck_cluster.web.wait | default(false) }}"
+    wait_timeout: "{{ flightdeck_cluster.web.timeout | default(omit) }}"
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
   loop: "{{ _pod_list }}"
   when:
@@ -128,6 +130,7 @@
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
     wait: "{{ flightdeck_cluster.web.wait | default(false) }}"
+    wait_timeout: "{{ flightdeck_cluster.web.timeout | default(omit) }}"
 - name: Create web service
   k8s:
     state: "{{ flightdeck_cluster.web.state | default('present') }}"
