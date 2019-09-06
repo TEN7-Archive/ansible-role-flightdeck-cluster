@@ -4,10 +4,18 @@
   when:
     - flightdeck_cluster.namespace is defined
     - flightdeck_cluster.namespace != 'default'
+- name: Work with volumes
+  include_tasks: 'volumes.yml'
+  when:
+    - flightdeck_cluster.volumes is defined
 - name: Work with secrets
   include_tasks: 'secrets.yml'
+  when:
+    - flightdeck_cluster.secrets is defined
 - name: Work with configmaps
   include_tasks: 'configmaps.yml'
+  when:
+    - flightdeck_cluster.configMaps is defined
 - name: Work with mysql
   include_tasks: 'mysql.yml'
   when:
