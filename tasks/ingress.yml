@@ -17,6 +17,9 @@
           # Increase the file upload limit
           ingress.kubernetes.io/proxy-body-size: "{{ flightdeck_cluster.ingress.maxBodySize | default('128m') }}"
           nginx.ingress.kubernetes.io/proxy-body-size: "{{ flightdeck_cluster.ingress.maxBodySize | default('128m') }}"
+          # Increase the proxy timeouts
+          nginx.ingress.kubernetes.io/proxy-send-timeout: "{{ flightdeck_cluster.ingress.sendTimeout | default('300') }}"
+          nginx.ingress.kubernetes.io/proxy-read-timeout: "{{ flightdeck_cluster.ingress.readTimeout | default('300') }}"
       {% if flightdeck_cluster.ingress.tlsIssuer is defined %}
           kubernetes.io/ingress.class: nginx
           certmanager.k8s.io/cluster-issuer: {{ flightdeck_cluster.ingress.tlsIssuer }}
