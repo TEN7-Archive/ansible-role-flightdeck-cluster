@@ -442,6 +442,11 @@ flightdeck_cluster:
       - name: "http"
         port: "80"
         targetPort: "http"
+    config:
+      - name: "http-redirect-code"
+        value: "301"
+    tcpConfig: []
+    udpConfig: []
 ```
 
 Where:
@@ -449,6 +454,9 @@ Where:
 * **state** specifies if the ingress controller is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.ingressController` is defined.
 * **name** is the name of the ingress controller to create. Optional, defaults to `nginx-ingress`.
 * **ports** is a list of external port mappings, including a `name`, the `port` number, and the `targetPort` name. Optional, defaults to exposing the default HTTP and HTTPS ports.
+* **config** is a list of configuration options for the controller. Each item has a `name`, and a `value`. See the [Ingress Nginx docs](https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/configmap.md) for a complete list. Optional.
+* **tcpConfig** is like **config**, but only for TCP based services. Optional.
+* **udpCOnfig** is like **config**, but only for UDP based services. Optional.
 
 ### Cron
 

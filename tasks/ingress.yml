@@ -24,9 +24,6 @@
           kubernetes.io/ingress.class: nginx
           certmanager.k8s.io/cluster-issuer: {{ flightdeck_cluster.ingress.tlsIssuer }}
       {% endif %}
-      {% if flightdeck_cluster.ingress.permanentRedirectCode is defined %}
-          nginx.ingress.kubernetes.io/permanent-redirect-code: "{{ flightdeck_cluster.ingress.permanentRedirectCode | int }}"
-      {% endif %}
       spec:
       {% if flightdeck_cluster.ingress.tls is defined %}
         tls:

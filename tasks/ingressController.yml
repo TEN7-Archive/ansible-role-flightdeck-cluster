@@ -13,6 +13,12 @@
         labels:
           app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
           app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+      {% if flightdeck_cluster.ingressController.config is defined %}
+      data:
+      {% for _item in flightdeck_cluster.ingressController.config %}
+        {{ _item.name }}: "{{ _item.value }}"
+      {% endfor %}
+      {% endif %}
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
 - name: Create configmap tcp-services
@@ -26,6 +32,12 @@
         labels:
           app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
           app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+      {% if flightdeck_cluster.ingressController.tcpConfig is defined %}
+      data:
+      {% for _item in flightdeck_cluster.ingressController.tcpConfig %}
+        {{ _item.name }}: "{{ _item.value }}"
+      {% endfor %}
+      {% endif %}
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
 - name: Create configmap udp-services
@@ -39,6 +51,12 @@
         labels:
           app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
           app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+      {% if flightdeck_cluster.ingressController.udpConfig is defined %}
+      data:
+      {% for _item in flightdeck_cluster.ingressController.udpConfig %}
+        {{ _item.name }}: "{{ _item.value }}"
+      {% endfor %}
+      {% endif %}
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
 - name: Create ingress service account
