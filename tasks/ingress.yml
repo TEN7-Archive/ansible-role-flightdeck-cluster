@@ -23,8 +23,9 @@
       {% if flightdeck_cluster.ingress.tlsIssuer is defined %}
           kubernetes.io/ingress.class: nginx
           certmanager.k8s.io/cluster-issuer: {{ flightdeck_cluster.ingress.tlsIssuer }}
-          nginx.ingress.kubernetes.io/use-regex: "{{ flightdeck_cluster.ingress.useRegex | default(true) | ternary('true', 'false') }}"
       {% endif %}
+          nginx.ingress.kubernetes.io/use-regex: "{{ flightdeck_cluster.ingress.useRegex | default(true) | ternary('true', 'false') }}"
+          nginx.ingress.kubernetes.io/proxy-buffer-size: "{{ flightdeck_cluster.ingress.proxyBufferSize | default('16k') }}" 
       spec:
       {% if flightdeck_cluster.ingress.tls is defined %}
         tls:
