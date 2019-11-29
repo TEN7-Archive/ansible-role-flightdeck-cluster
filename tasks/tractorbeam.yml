@@ -17,7 +17,7 @@
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
   when:
-    - flightdeck_cluster.tractorbeam.size is defined
+    - flightdeck_cluster.tractorbeam.size | default(false) | bool
   loop:
     - "tractorbeam-cache-daily"
     - "tractorbeam-cache-weekly"
@@ -57,7 +57,7 @@
                       - daily
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                     volumeMounts:
-      {% if flightdeck_cluster.tractorbeam.size is defined %}
+      {% if flightdeck_cluster.tractorbeam.size | default(false) | bool %}
                       - mountPath: /backup
                         name: vol-tractorbeam-cache
                         subPath: tractorbeam
@@ -74,7 +74,7 @@
                 restartPolicy: OnFailure
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                 volumes:
-      {% if flightdeck_cluster.tractorbeam.size is defined %}
+      {% if flightdeck_cluster.tractorbeam.size | default(false) | bool %}
                   - name: vol-tractorbeam-cache
                     persistentVolumeClaim:
                       claimName: tractorbeam-cache-daily
@@ -127,7 +127,7 @@
                       - weekly
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                     volumeMounts:
-      {% if flightdeck_cluster.tractorbeam.size is defined %}
+      {% if flightdeck_cluster.tractorbeam.size | default(false) | bool %}
                       - mountPath: /backup
                         name: vol-tractorbeam-cache
                         subPath: tractorbeam
@@ -144,7 +144,7 @@
                 restartPolicy: OnFailure
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                 volumes:
-      {% if flightdeck_cluster.tractorbeam.size is defined %}
+      {% if flightdeck_cluster.tractorbeam.size | default(false) | bool %}
                   - name: vol-tractorbeam-cache
                     persistentVolumeClaim:
                       claimName: tractorbeam-cache-weekly
@@ -197,7 +197,7 @@
                       - monthly
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                     volumeMounts:
-      {% if flightdeck_cluster.tractorbeam.size is defined %}
+      {% if flightdeck_cluster.tractorbeam.size | default(false) | bool %}
                       - mountPath: /backup
                         name: vol-tractorbeam-cache
                         subPath: tractorbeam
@@ -214,7 +214,7 @@
                 restartPolicy: OnFailure
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                 volumes:
-      {% if flightdeck_cluster.tractorbeam.size is defined %}
+      {% if flightdeck_cluster.tractorbeam.size | default(false) | bool %}
                   - name: vol-tractorbeam-cache
                     persistentVolumeClaim:
                       claimName: tractorbeam-cache-monthly
