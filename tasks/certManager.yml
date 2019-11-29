@@ -1530,7 +1530,7 @@
   k8s:
     state: "{{ flightdeck_cluster.certManager.state | default('present') }}"
     definition: |
-      apiVersion: apps/v1beta1
+      apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: cert-manager-cainjector
@@ -1575,7 +1575,7 @@
   k8s:
     state: "{{ flightdeck_cluster.certManager.state | default('present') }}"
     definition: |
-      apiVersion: apps/v1beta1
+      apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: cert-manager-webhook
@@ -1630,7 +1630,7 @@
   k8s:
     state: "{{ flightdeck_cluster.certManager.state | default('present') }}"
     definition: |
-      apiVersion: apps/v1beta1
+      apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: cert-manager
