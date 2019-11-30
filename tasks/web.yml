@@ -36,7 +36,7 @@
   k8s:
     state: "{{ flightdeck_cluster.web.state | default('present') }}"
     definition: |
-      apiVersion: extensions/v1beta1
+      apiVersion: apps/v1
       kind: Deployment
       metadata:
         labels:
@@ -152,7 +152,7 @@
   k8s:
     state: "{{ flightdeck_cluster.web.state | default('present') }}"
     definition: |
-      apiVersion: extensions/v1beta1
+      apiVersion: apps/v1
       kind: Deployment
       metadata:
         labels:
