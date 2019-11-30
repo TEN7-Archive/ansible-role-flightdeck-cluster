@@ -3,7 +3,7 @@
   k8s:
     state: "{{ flightdeck_cluster.ingress.state | default('present') }}"
     definition: |
-      apiVersion: apps/v1
+      apiVersion: networking.k8s.io/v1beta1
       kind: Ingress
       metadata:
         name: "{{ flightdeck_cluster.ingress.name | default('ingress') }}"
