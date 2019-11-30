@@ -3,7 +3,7 @@
   k8s:
     state: "{{ flightdeck_cluster.ingress.state | default('present') }}"
     definition: |
-      apiVersion: extensions/v1beta1
+      apiVersion: apps/v1
       kind: Ingress
       metadata:
         name: "{{ flightdeck_cluster.ingress.name | default('ingress') }}"
@@ -25,7 +25,7 @@
           certmanager.k8s.io/cluster-issuer: {{ flightdeck_cluster.ingress.tlsIssuer }}
       {% endif %}
           nginx.ingress.kubernetes.io/use-regex: "{{ flightdeck_cluster.ingress.useRegex | default(true) | ternary('true', 'false') }}"
-          nginx.ingress.kubernetes.io/proxy-buffer-size: "{{ flightdeck_cluster.ingress.proxyBufferSize | default('16k') }}" 
+          nginx.ingress.kubernetes.io/proxy-buffer-size: "{{ flightdeck_cluster.ingress.proxyBufferSize | default('16k') }}"
       spec:
       {% if flightdeck_cluster.ingress.tls is defined %}
         tls:

@@ -9,7 +9,7 @@
 - name: Delete the existing web deployment
   k8s:
     state: absent
-    api_version: "extensions/v1beta1"
+    api_version: "apps/v1"
     kind: "deployment"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
     name: "web"
