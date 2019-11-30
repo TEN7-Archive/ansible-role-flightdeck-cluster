@@ -143,8 +143,8 @@
       {% endif %}
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
-    wait: "{{ flightdeck_cluster.web.wait | default(false) }}"
-    wait_timeout: "{{ flightdeck_cluster.web.timeout | default(300) }}"
+    wait: "{{ flightdeck_cluster.web.wait | default(omit) }}"
+    wait_timeout: "{{ flightdeck_cluster.web.timeout | default(omit) }}"
 - name: Create web service
   k8s:
     state: "{{ flightdeck_cluster.web.state | default('present') }}"
