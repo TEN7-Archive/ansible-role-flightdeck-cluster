@@ -44,6 +44,9 @@
         name: web
       spec:
         replicas: {{ flightdeck_cluster.web.replicas | default('3') }}
+        selector:
+          matchLabels:
+            app: web
         strategy:
           type: RollingUpdate
           rollingUpdate:
@@ -160,6 +163,9 @@
         name: web
       spec:
         replicas: {{ flightdeck_cluster.web.replicas | default('3') }}
+        selector:
+          matchLabels:
+            app: web
         strategy:
           type: RollingUpdate
           rollingUpdate:
