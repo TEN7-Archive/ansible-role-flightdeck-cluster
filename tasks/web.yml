@@ -181,6 +181,13 @@
             nodeSelector:
               {{ flightdeck_cluster.web.nodeSelector.key }}: {{ flightdeck_cluster.web.nodeSelector.value }}
       {% endif %}
+      {% if (flightdeck_cluster.web.env is defined %}
+            env:
+      {% for _env in flightdeck_cluster.web.env | default([]) %}
+              - name: "{{ _env.key }}"
+                value: "{{ _env.value }}"
+      {% endfor %}
+      {% endif %}
             securityContext:
               fsGroup: {{ flightdeck_cluster.web.fsGroup | default('1000') }}
             containers:
