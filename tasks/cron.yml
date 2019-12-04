@@ -26,13 +26,13 @@
       {% if item.command is defined %}
                     command:
       {% for _command in item.command %}
-                      - {{ _command }}
+                      - "{{ _command }}"
       {% endfor %}
       {% endif %}
       {% if item.args is defined %}
                     args:
       {% for _arg in item.args %}
-                      - {{ _arg }}
+                      - "{{ _arg }}"
       {% endfor %}
       {% endif %}
       {% if (item.secrets is defined) or (item.configMaps is defined) %}

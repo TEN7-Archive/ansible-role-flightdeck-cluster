@@ -181,7 +181,7 @@
             nodeSelector:
               {{ flightdeck_cluster.web.nodeSelector.key }}: {{ flightdeck_cluster.web.nodeSelector.value }}
       {% endif %}
-      {% if (flightdeck_cluster.web.env is defined %}
+      {% if flightdeck_cluster.web.env is defined %}
             env:
       {% for _env in flightdeck_cluster.web.env | default([]) %}
               - name: "{{ _env.key }}"

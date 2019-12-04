@@ -1,0 +1,334 @@
+#
+# See https://gitlab.com/gitlab-org/charts/gitlab-runner/blob/master
+#
+---
+- name: Create service account gitlab-runner
+  k8s:
+    state: "{{ flightdeck_cluster.gitlabRunner.state | default('present') }}"
+    definition: |
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: gitlab-runner
+        namespace: "{{ flightdeck_cluster.namespace }}"
+        labels:
+          app: gitlab-runner
+          chart: gitlab-runner-v0.11.0-beta
+          release: gitlab-runner
+          heritage: Tiller
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace }}"
+- name: Create role gitlab-runner
+  k8s:
+    state: "{{ flightdeck_cluster.gitlabRunner.state | default('present') }}"
+    definition: |
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: "Role"
+      metadata:
+        name: gitlab-runner
+        labels:
+          app: gitlab-runner
+          chart: gitlab-runner-v0.11.0-beta
+          release: gitlab-runner
+          heritage: Tiller
+      rules:
+        - apiGroups: [""]
+          resources: ["pods", "pods/exec", "secrets"]
+          verbs: ["get", "list", "watch", "create", "patch", "delete"]
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace }}"
+- name: Create role binding gitlab-runner
+  k8s:
+    state: "{{ flightdeck_cluster.gitlabRunner.state | default('present') }}"
+    definition: |
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: "RoleBinding"
+      metadata:
+        name: gitlab-runner
+        labels:
+          app: gitlab-runner
+          chart: gitlab-runner-v0.11.0-beta
+          release: gitlab-runner
+          heritage: Tiller
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: "Role"
+        name: gitlab-runner
+      subjects:
+        - kind: ServiceAccount
+          name: gitlab-runner
+          namespace: "{{ flightdeck_cluster.namespace }}"
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace }}"
+- name: Create gitlab-runner configmap
+  k8s:
+    state: "{{ flightdeck_cluster.gitlabRunner.state | default('present') }}"
+    definition: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: gitlab-runner
+        labels:
+          app: gitlab-runner
+          chart: gitlab-runner-v0.11.0-beta
+          release: gitlab-runner
+          heritage: Tiller
+      data:
+        entrypoint: |
+          #!/bin/bash
+          set -e
+          mkdir -p /home/gitlab-runner/.gitlab-runner/
+          cp /scripts/config.toml /home/gitlab-runner/.gitlab-runner/
+
+          # Register the runner
+          if [[ -f /secrets/accesskey && -f /secrets/secretkey ]]; then
+            export CACHE_S3_ACCESS_KEY=$(cat /secrets/accesskey)
+            export CACHE_S3_SECRET_KEY=$(cat /secrets/secretkey)
+          fi
+
+          if [[ -f /secrets/gcs-applicaton-credentials-file ]]; then
+            export GOOGLE_APPLICATION_CREDENTIALS="/secrets/gcs-applicaton-credentials-file"
+          else
+            if [[ -f /secrets/gcs-access-id && -f /secrets/gcs-private-key ]]; then
+              export CACHE_GCS_ACCESS_ID=$(cat /secrets/gcs-access-id)
+              # echo -e used to make private key multiline (in google json auth key private key is oneline with \n)
+              export CACHE_GCS_PRIVATE_KEY=$(echo -e $(cat /secrets/gcs-private-key))
+            fi
+          fi
+
+          if [[ -f /secrets/runner-registration-token ]]; then
+            export REGISTRATION_TOKEN=$(cat /secrets/runner-registration-token)
+          fi
+
+          if [[ -f /secrets/runner-token ]]; then
+            export CI_SERVER_TOKEN=$(cat /secrets/runner-token)
+          fi
+
+          if ! sh /scripts/register-the-runner; then
+            exit 1
+          fi
+
+          # Start the runner
+          exec /entrypoint run --user=gitlab-runner \
+            --working-directory=/home/gitlab-runner
+
+        config.toml: |
+          concurrent = {{ flightdeck_cluster.gitlabRunner.concurrent | default('10') }}
+          check_interval = {{ flightdeck_cluster.gitlabRunner.checkInterval | default('30') }}
+          log_level = "{{ flightdeck_cluster.gitlabRunner.logLevel |  default('info') }}"
+          {% if flightdeck_cluster.gitlabRunner.logFormat is defined %}
+          log_format = {{ flightdeck_cluster.gitlabRunner.logFormat | quote }}
+          {% endif %}
+          {% if flightdeck_cluster.gitlabRunner.metrics.enabled is defined %}
+          listen_address = '[::]:9252'
+          {% endif %}
+
+        configure: |
+          set -e
+          cp /init-secrets/* /secrets
+
+        register-the-runner: |
+          #!/bin/bash
+          MAX_REGISTER_ATTEMPTS=30
+
+          for i in $(seq 1 "${MAX_REGISTER_ATTEMPTS}"); do
+            echo "Registration attempt ${i} of ${MAX_REGISTER_ATTEMPTS}"
+            /entrypoint register \
+              {% for _item in flightdeck_cluster.gitlabRunner.runners.imagePullSecrets | default([]) %}
+              --kubernetes-image-pull-secrets {{ _item | quote }} \
+              {% endfor %}
+              {% for _item in flightdeck_cluster.gitlabRunner.runners.nodeSelectors | default([]) %}
+              --kubernetes-node-selector {{ _item.key | quote }}:{{ _item.value | quote }} \
+              {% endfor %}
+              {% for _item in flightdeck_cluster.gitlabRunner.runners.podLabels | default([]) %}
+              --kubernetes-pod-labels {{ _item.key | quote }}:{{ _item.value | quote }} \
+              {% endfor %}
+              {% for _item in flightdeck_cluster.gitlabRunner.runners.podAnnotations | default([]) %}
+              --kubernetes-pod-annotations {{ _item.key | quote }}:{{ _item.value | quote }} \
+              {% endfor %}
+              {% for _item in flightdeck_cluster.gitlabRunner.runners.env | default([]) %}
+              --env {{ _item.key | quote -}} = {{ _item.value | quote }} \
+              {% endfor %}
+              {% if flightdeck_cluster.gitlabRunner.runners.runUntagged | default(false) %}
+              --run-untagged=true \
+              {% endif %}
+              --non-interactive
+
+            retval=$?
+
+            if [ ${retval} = 0 ]; then
+              break
+            elif [ ${i} = ${MAX_REGISTER_ATTEMPTS} ]; then
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+          exit 0
+
+        check-live: |
+          #!/bin/bash
+          if /usr/bin/pgrep -f .*register-the-runner; then
+            exit 0
+          elif /usr/bin/pgrep gitlab.*runner; then
+            exit 0
+          else
+            exit 1
+          fi
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace }}"
+- name: Create gitlab-runner secret
+  k8s:
+    state: "{{ flightdeck_cluster.gitlabRunner.state | default('present') }}"
+    definition: |
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: gitlab-runner
+        labels:
+          app: gitlab-runner
+          chart: gitlab-runner-v0.11.0-beta
+          release: gitlab-runner
+          heritage: Tiller
+      type: Opaque
+      data:
+        runner-registration-token: {{ flightdeck_cluster.gitlabRunner.runnerRegistrationToken | default('') | b64encode | quote }}
+        runner-token: {{ flightdeck_cluster.gitlabRunner.runnerToken | default('') | b64encode | quote }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace }}"
+  when:
+    - (flightdeck_cluster.gitlabRunner.runnerRegistrationToken is defined) or (flightdeck_cluster.gitlabRunner.runnerToken is defined)
+- name: Create gitlab-runner deployment
+  k8s:
+    state: "{{ flightdeck_cluster.gitlabRunner.state | default('present') }}"
+    definition: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: gitlab-runner
+        labels:
+          app: gitlab-runner
+          chart: gitlab-runner-v0.11.0-beta
+          release: gitlab-runner
+          heritage: Tiller
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: gitlab-runner
+        template:
+          metadata:
+            labels:
+              app: gitlab-runner
+              chart: gitlab-runner-v0.11.0-beta
+              release: gitlab-runner
+              heritage: Tiller
+          spec:
+            securityContext:
+              runAsUser: 100
+              fsGroup: 65533
+            terminationGracePeriodSeconds: {{ flightdeck_cluster.gitlabRunner.terminationGracePeriodSeconds | default('3600') }}
+            initContainers:
+              - name: configure
+                command: ['sh', '/config/configure']
+                image: gitlab/gitlab-runner:alpine
+                imagePullPolicy: Always
+                env:
+                  - name: CI_SERVER_URL
+                    value: {{ flightdeck_cluster.gitlabRunner.gitlabUrl | default('') }}
+                  - name: RUNNER_EXECUTOR
+                    value: "kubernetes"
+                  - name: REGISTER_LOCKED
+                    value: "false"
+                  - name: RUNNER_TAG_LIST
+                    value: {{ flightdeck_cluster.gitlabRunner.runners.tags | default('') | join(',') | quote }}
+                  - name: KUBERNETES_IMAGE
+                    value: "alpine:3.9"
+                  - name: KUBERNETES_PRIVILEGED
+                    value: "false"
+                  - name: KUBERNETES_NAMESPACE
+                    value: "{{ flightdeck_cluster.namespace }}"
+                volumeMounts:
+                  - name: runner-secrets
+                    mountPath: /secrets
+                    readOnly: false
+                  - name: scripts
+                    mountPath: /config
+                    readOnly: true
+                  - name: init-runner-secrets
+                    mountPath: /init-secrets
+                    readOnly: true
+            serviceAccountName: gitlab-runner
+            containers:
+            - name: gitlab-runner
+              image: gitlab/gitlab-runner:alpine
+              imagePullPolicy: Always
+              lifecycle:
+                preStop:
+                  exec:
+                    command: ["/entrypoint", "unregister", "--all-runners"]
+              command: ["/bin/bash", "/scripts/entrypoint"]
+              env:
+                - name: CI_SERVER_URL
+                  value: {{ flightdeck_cluster.gitlabRunner.gitlabUrl | default('') }}
+                - name: RUNNER_EXECUTOR
+                  value: "kubernetes"
+                - name: REGISTER_LOCKED
+                  value: "false"
+                - name: RUNNER_TAG_LIST
+                  value: {{ flightdeck_cluster.gitlabRunner.runners.tags | default('') | join(',') | quote }}
+                - name: KUBERNETES_IMAGE
+                  value: "alpine:3.9"
+                - name: KUBERNETES_PRIVILEGED
+                  value: "false"
+                - name: KUBERNETES_NAMESPACE
+                  value: "{{ flightdeck_cluster.namespace }}"
+              livenessProbe:
+                exec:
+                  command: ["/bin/bash", "/scripts/check-live"]
+                initialDelaySeconds: 60
+                timeoutSeconds: 1
+                periodSeconds: 10
+                successThreshold: 1
+                failureThreshold: 3
+              readinessProbe:
+                exec:
+                  command: ["/usr/bin/pgrep","gitlab.*runner"]
+                initialDelaySeconds: 10
+                timeoutSeconds: 1
+                periodSeconds: 10
+                successThreshold: 1
+                failureThreshold: 3
+              ports:
+              - name: metrics
+                containerPort: 9252
+              volumeMounts:
+              - name: runner-secrets
+                mountPath: /secrets
+              - name: etc-gitlab-runner
+                mountPath: /home/gitlab-runner/.gitlab-runner
+              - name: scripts
+                mountPath: /scripts
+            volumes:
+            - name: runner-secrets
+              emptyDir:
+                medium: "Memory"
+            - name: etc-gitlab-runner
+              emptyDir:
+                medium: "Memory"
+            - name: init-runner-secrets
+              projected:
+                sources:
+                  - secret:
+                      name: gitlab-runner
+                      items:
+                        - key: runner-registration-token
+                          path: runner-registration-token
+                        - key: runner-token
+                          path: runner-token
+            - name: scripts
+              configMap:
+                name: gitlab-runner
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace }}"

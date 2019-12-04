@@ -52,3 +52,11 @@
   include_tasks: 'cron.yml'
   when:
     - flightdeck_cluster.cron is defined
+- name: Work with gitlab runner
+  include_tasks: 'gitlabRunner.yml'
+  when:
+    - flightdeck_cluster.gitlabRunner is defined
+- name: Work with container registry
+  include_tasks: 'registry.yml'
+  when:
+    - flightdeck_cluster.registry is defined
