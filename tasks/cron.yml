@@ -11,6 +11,8 @@
         schedule: "{{ item.schedule | default('0 0 * * *') }}"
         successfulJobsHistoryLimit: {{ item.keepLastSuccessful | default(0) }}
         failedJobsHistoryLimit: {{ item.keepLastFailed | default(1) }}
+        concurrencyPolicy: {{ item.concurrencyPolicy | default('Forbid') }}
+        suspend: {{ item.suspend | default(false) | ternary('true', 'false') }}
         jobTemplate:
           spec:
             template:

@@ -467,6 +467,8 @@ cron:
   - name: "my-cron"
     schedule: "0 */3 * * *"
     image: "myRegistry.tld:5000/my_custom_image:tag"
+    concurrencyPolicy: "Forbid"
+    suspend: false
     command:
       - "mycommand"
     args:
@@ -484,6 +486,8 @@ Where:
 * **schedule** is the crontab formatted schedule on which to run the job. Required.
 * **command** is the command (entrypoint) to run in the pod. Optional.
 * **args** are the arguments to pass to the command. Optional.
+* **concurrencyPolicy** specifies if the cronjob can be run multiple times concurrently. Optional. False by default (opposite k8s' default).
+* **suspend** specifies if the cronjob is disabled. Optional. Defaults to false (enabled).
 * **secrets** are the secrets to mount in the container. Optional. Works like the `web` service.
 * **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.
 
