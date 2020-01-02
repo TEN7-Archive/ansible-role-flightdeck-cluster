@@ -24,7 +24,7 @@
     dest: "{{ _certManager_tmp_dir.path }}/cert-manager.yaml"
 - name: Apply the cert manager manifest.
   k8s:
-    state: "{{ item.state | default('present') }}"
+    state: "{{ flightdeck_cluster.certManager.state | default('present') }}"
     src: "{{ _certManager_tmp_dir.path }}/cert-manager.yaml"
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace }}"
