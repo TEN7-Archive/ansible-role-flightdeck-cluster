@@ -13,6 +13,7 @@
         failedJobsHistoryLimit: {{ item.keepLastFailed | default(1) }}
         concurrencyPolicy: {{ item.concurrencyPolicy | default('Forbid') }}
         suspend: {{ item.suspend | default(false) | ternary('true', 'false') }}
+        startingDeadlineSeconds: {{ item.deadlineSeconds | default('60') }}
         jobTemplate:
           spec:
             template:
