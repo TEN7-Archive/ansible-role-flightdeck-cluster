@@ -164,20 +164,35 @@ Where:
 
 #### Configuring Varnish
 
-The varnish container may also be configured under `flightdeck_cluster.web.varnish`:
+The varnish container may be configured by creating  configmap with the item name `flight-deck-varnish.yml` and mounting it at `/config/varnish`:
 
 ```yaml
 flightdeck_cluster:
+  namespace: "example-com"
+  configMaps:
+    - name: "flight-deck-varnish"
+      files:
+        - name: "flight-deck-varnish.yml"
+          content: |
+          flightdeck_varnish:
+            secret: "secretish"
+            hostPort: "6081"
+            controlPort: "6082"
+            memSize: "256m"
+            storageFile: "/var/lib/varnish/storage.bin"
+            storageSize: "1024m"
+            backends:
+             - name: "default"
+               host: "web"
+               port: "80"
   web:
-    varnish:
-      memory: "256M"
-      storage: "1024M"
+    replicas: 1
+    configMaps:
+      - name: "flight-deck-varnish"
+        path: "/config/varnish"
 ```
 
-Where:
-
-* **memory** is the amount of memory to allocate to the container. Optional, default is 256MB.
-* **storage** is the amount of disk to allocate for caching. Optional, default is 1GB.
+See the [`flight-deck-varnish`](https://github.com/ten7/flight-deck-varnish) repository for details.
 
 #### Specifying placement
 
@@ -206,6 +221,7 @@ flightdeck_cluster:
     state: present
     replicas: 3
     image: 'memcached:1.5-alpine'
+    memory: '128'
 
 ```
 
@@ -214,6 +230,7 @@ Where:
 * **state**: Optional. If the service is `present` or `absent`, defaults to `present` when `flightdeck_cluster.memcache` is defined.
 * **replicas**: Optional, but recommended. The number of memcache replicas to create. Defaults to 3.
 * **image**: Optional. The image to use for the memcache service. Defaults to the official memecache image.
+* **memory** is the amount of memory in MB to allocate for memcache. Optional, defaults to 128MB.
 
 ### MySQL database
 
