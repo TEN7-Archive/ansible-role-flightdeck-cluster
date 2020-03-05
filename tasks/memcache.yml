@@ -26,9 +26,11 @@
               - image: "{{ flightdeck_cluster.memcache.image | default('memcached:1.5-alpine') }}"
                 imagePullPolicy: Always
                 name: "memcache"
+      {% if flightdeck_cluster.memcache.memory is defined %}
                 command:
                   - "memcached"
-                  - "-m {{ flightdeck_cluster.memcache.memory | default(128) }}"
+                  - "-m {{ flightdeck_cluster.memcache.memory | default(64) }}"
+      {% endif %}
                 ports:
                   - containerPort: 11211
                     name: memcache

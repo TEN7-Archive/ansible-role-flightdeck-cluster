@@ -221,7 +221,7 @@ flightdeck_cluster:
     state: present
     replicas: 3
     image: 'memcached:1.5-alpine'
-    memory: '128'
+    memory: '64'
 
 ```
 
@@ -230,7 +230,12 @@ Where:
 * **state**: Optional. If the service is `present` or `absent`, defaults to `present` when `flightdeck_cluster.memcache` is defined.
 * **replicas**: Optional, but recommended. The number of memcache replicas to create. Defaults to 3.
 * **image**: Optional. The image to use for the memcache service. Defaults to the official memecache image.
-* **memory** is the amount of memory in MB to allocate for memcache. Optional, defaults to 128MB.
+* **memory** is the amount of memory in MB to allocate for memcache. Optional, defaults to 64MB.
+
+Note that **memory** is the amount of memory allocated per-replica, not total!
+If you have 3 replicas, your total memcache amount will be 64MB x 3 = 128MB. Many memcache clients will load-balance multiple instances by providing the memcache hostname.
+
+Memcache is provided as a StatefulSet with a headless service named `memcache`. Within the same namespace, they may be accessed via the hostname `memcache-n.memcache:11211` where *n* is a number starting at zero and ending at your **replicas** value minus one.
 
 ### MySQL database
 
