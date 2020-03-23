@@ -25,7 +25,7 @@
                 containers:
                   - name: cron
                     image: "{{ item.image }}"
-                    imagePullPolicy: Always
+                    imagePullPolicy: {{ item.imagePullPolicy | default('Always') }}
       {% if item.command is defined %}
                     command:
       {% for _command in item.command %}

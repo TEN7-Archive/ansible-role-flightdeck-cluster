@@ -31,7 +31,7 @@
       {% endfor %}
       {% endif %}
             containers:
-              - image: {{ flightdeck_cluster.registry.image | default('registry:2.5') }}
+              - image: {{ flightdeck_cluster.registry.image | default('registry:2.7') }}
                 imagePullPolicy: Always
                 name: registry
                 ports:
