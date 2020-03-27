@@ -128,7 +128,7 @@
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                     volumeMounts:
       {% if flightdeck_cluster.tractorbeam.size | default(false) | bool %}
-                      - mountPath: /backup
+                      - mountPath: /backups
                         name: vol-tractorbeam-cache
                         subPath: tractorbeam
       {% endif %}
@@ -198,7 +198,7 @@
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                     volumeMounts:
       {% if flightdeck_cluster.tractorbeam.size | default(false) | bool %}
-                      - mountPath: /backup
+                      - mountPath: /backups
                         name: vol-tractorbeam-cache
                         subPath: tractorbeam
       {% endif %}
