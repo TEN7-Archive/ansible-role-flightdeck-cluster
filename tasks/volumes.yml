@@ -9,6 +9,7 @@
       metadata:
         name: {{ item.name }}
       spec:
+        storageClassName: "{{ item.class | default(omit) }}"
         accessModes:
           - {{ item.mode | default('ReadWriteOnce') }}
         resources:
