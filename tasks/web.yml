@@ -120,6 +120,16 @@
                     mountPath: "{{ _config.path | default('/config') }}"
       {% endfor %}
       {% endif %}
+      {% if flightdeck_cluster.web.hostAliases is defined %}
+            hostAliases:
+      {% for _hostAlias in flightdeck_cluster.web.hostAliases %}
+              - ip: "{{ _hostAlias.ip | default('127.0.0.1') }}"
+                hostnames:
+      {% for _hostname in _hostAlias.hostnames | default(['docker.test']) %}
+                  - "{{ _hostname }}"
+      {% endfor %}
+      {% endfor %}
+      {% endif %}
       {% if flightdeck_cluster.web.imagePullSecrets is defined %}
             imagePullSecrets:
       {% for _imagePullSecret in flightdeck_cluster.web.imagePullSecrets %}
@@ -244,6 +254,16 @@
       {% for _config in flightdeck_cluster.web.configMaps | default([]) %}
                   - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
                     mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+      {% endif %}
+      {% if flightdeck_cluster.web.hostAliases is defined %}
+            hostAliases:
+      {% for _hostAlias in flightdeck_cluster.web.hostAliases %}
+              - ip: "{{ _hostAlias.ip | default('127.0.0.1') }}"
+                hostnames:
+      {% for _hostname in _hostAlias.hostnames | default(['docker.test']) %}
+                  - "{{ _hostname }}"
+      {% endfor %}
       {% endfor %}
       {% endif %}
       {% if flightdeck_cluster.web.imagePullSecrets is defined %}
