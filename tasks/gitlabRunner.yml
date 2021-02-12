@@ -232,7 +232,7 @@
             initContainers:
               - name: configure
                 command: ['sh', '/config/configure']
-                image: gitlab/gitlab-runner:alpine
+                image: registry.gitlab.com/gitlab-org/gitlab-runner:alpine
                 imagePullPolicy: Always
                 env:
                   - name: CI_SERVER_URL
@@ -262,7 +262,7 @@
             serviceAccountName: gitlab-runner
             containers:
             - name: gitlab-runner
-              image: gitlab/gitlab-runner:alpine
+              image: registry.gitlab.com/gitlab-org/gitlab-runner:alpine
               imagePullPolicy: Always
               lifecycle:
                 preStop:
@@ -284,6 +284,10 @@
                   value: "false"
                 - name: KUBERNETES_NAMESPACE
                   value: "{{ flightdeck_cluster.namespace }}"
+                - name: RUNNER_ENV
+                  value: FF_GITLAB_REGISTRY_HELPER_IMAGE=true
+                - name: KUBERNETES_HELPER_IMAGE
+                  value:  "{{ flightdeck_cluster.gitlabRunner.runners.helperImage | default('registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-latest') }}"
               livenessProbe:
                 exec:
                   command: ["/bin/bash", "/scripts/check-live"]
