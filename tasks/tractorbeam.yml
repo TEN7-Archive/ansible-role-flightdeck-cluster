@@ -9,8 +9,9 @@
       metadata:
         name: {{ item }}
       spec:
+        storageClassName: "{{ flightdeck_cluster.tractorbeam.class | default(omit) }}"
         accessModes:
-          - ReadWriteOnce
+          - {{ flightdeck_cluster.tractorbeam.mode | default('ReadWriteOnce') }}
         resources:
           requests:
             storage: {{ flightdeck_cluster.tractorbeam.size }}
