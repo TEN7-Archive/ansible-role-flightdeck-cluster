@@ -20,6 +20,9 @@
           # Increase the proxy timeouts
           nginx.ingress.kubernetes.io/proxy-send-timeout: "{{ flightdeck_cluster.ingress.sendTimeout | default('300') }}"
           nginx.ingress.kubernetes.io/proxy-read-timeout: "{{ flightdeck_cluster.ingress.readTimeout | default('300') }}"
+      {% if flightdeck_cluster.ingress.rewriteTarget is defined %}
+          nginx.ingress.kubernetes.io/rewrite-target: "{{ flightdeck_cluster.ingress.rewriteTarget }}"
+      {% endif %}
       {% if flightdeck_cluster.ingress.auth is defined %}
           nginx.ingress.kubernetes.io/auth-type: "{{ flightdeck_cluster.ingress.auth.type | default('basic') }}"
           nginx.ingress.kubernetes.io/auth-secret: "{{ flightdeck_cluster.ingress.auth.secret }}"
