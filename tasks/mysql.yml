@@ -78,7 +78,7 @@
               name: vol-mysql
             spec:
               accessModes:
-                - ReadWriteOnce
+                - {{ flightdeck_cluster.mysql.mode | default('ReadWriteOnce') }}
       {% if flightdeck_cluster.mysql.storageClass is defined %}
               storageClassName: "{{ flightdeck_cluster.mysql.storageClass }}"
       {% endif %}

@@ -74,7 +74,7 @@
               name: vol-solr
             spec:
               accessModes:
-                - ReadWriteOnce
+                - {{ flightdeck_cluster.solr.mode | default('ReadWriteOnce') }}
       {% if flightdeck_cluster.solr.storageClass is defined %}
               storageClassName: "{{ flightdeck_cluster.solr.storageClass }}"
       {% endif %}

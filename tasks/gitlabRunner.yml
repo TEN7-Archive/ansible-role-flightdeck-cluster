@@ -149,6 +149,9 @@
               {% for _item in flightdeck_cluster.gitlabRunner.runners.env | default([]) %}
               --env {{ _item.key | quote -}} = {{ _item.value | quote }} \
               {% endfor %}
+              {% if flightdeck_cluster.gitlabRunner.runners.nodeSelector | default(false) %}
+              --kubernetes-node-selector doks.digitalocean.com/node-pool:{{ flightdeck_cluster.gitlabRunner.runners.nodeSelector }} \
+              {% endif %}
               {% if flightdeck_cluster.gitlabRunner.runners.runUntagged | default(false) %}
               --run-untagged=true \
               {% endif %}
@@ -260,6 +263,10 @@
                     mountPath: /init-secrets
                     readOnly: true
             serviceAccountName: gitlab-runner
+      {% if flightdeck_cluster.gitlabRunner.affinity is defined %}
+            affinity:
+              {{ flightdeck_cluster.gitlabRunner.affinity | to_nice_yaml | indent(8) }}
+      {% endif %}
             containers:
             - name: gitlab-runner
               image: registry.gitlab.com/gitlab-org/gitlab-runner:alpine
