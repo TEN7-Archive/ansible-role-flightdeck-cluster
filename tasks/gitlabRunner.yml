@@ -149,9 +149,6 @@
               {% for _item in flightdeck_cluster.gitlabRunner.runners.env | default([]) %}
               --env {{ _item.key | quote -}} = {{ _item.value | quote }} \
               {% endfor %}
-              {% if (flightdeck_cluster.gitlabRunner.runners.nodeSelector is defined) and (flightdeck_cluster.gitlabRunner.runners.nodeSelector.key is defined) and (flightdeck_cluster.gitlabRunner.runners.nodeSelector.value is defined) %}
-              --kubernetes-node-selector {{ flightdeck_cluster.web.nodeSelector.key }}: {{ flightdeck_cluster.web.nodeSelector.value }}
-              {% endif %}
               {% if flightdeck_cluster.gitlabRunner.runners.runUntagged | default(false) %}
               --run-untagged=true \
               {% endif %}
