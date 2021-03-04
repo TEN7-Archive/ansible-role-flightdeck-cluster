@@ -20,6 +20,12 @@
           metadata:
             labels:
               app: mysql
+      {% if flightdeck_cluster.mysql.annotations is defined %}
+            annotations:
+      {% for _annotation in flightdeck_cluster.mysql.annotations | default([]) %}
+              {{ _annotation.key }}: {{ _annotation.value }}
+      {% endfor %}
+      {% endif %}
           spec:
       {% if (flightdeck_cluster.mysql.nodeSelector is defined) and (flightdeck_cluster.mysql.nodeSelector.key is defined) and (flightdeck_cluster.mysql.nodeSelector.value is defined) %}
             nodeSelector:

@@ -57,6 +57,12 @@
           metadata:
             labels:
               app: web
+      {% if flightdeck_cluster.web.annotations is defined %}
+            annotations:
+      {% for _annotation in flightdeck_cluster.web.annotations | default([]) %}
+              {{ _annotation.key }}: {{ _annotation.value }}
+      {% endfor %}
+      {% endif %}
           spec:
       {% if (flightdeck_cluster.web.nodeSelector is defined) and (flightdeck_cluster.web.nodeSelector.key is defined) and (flightdeck_cluster.web.nodeSelector.value is defined) %}
             nodeSelector:

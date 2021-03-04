@@ -17,6 +17,12 @@
           metadata:
             labels:
               app: solr
+      {% if flightdeck_cluster.solr.annotations is defined %}
+            annotations:
+      {% for _annotation in flightdeck_cluster.solr.annotations | default([]) %}
+              {{ _annotation.key }}: {{ _annotation.value }}
+      {% endfor %}
+      {% endif %}
           spec:
       {% if (flightdeck_cluster.solr.nodeSelector is defined) and (flightdeck_cluster.solr.nodeSelector.key is defined) and (flightdeck_cluster.solr.nodeSelector.value is defined) %}
             nodeSelector:
