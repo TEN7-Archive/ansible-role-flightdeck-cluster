@@ -70,6 +70,37 @@
       {% endif %}
             securityContext:
               fsGroup: {{ flightdeck_cluster.web.fsGroup | default('1000') }}
+      {% if flightdeck_cluster.web.initContainers is defined %}
+            initContainers:
+      {% for _initContainer in flightdeck_cluster.web.initContainers | default([]) %}
+              - name: "{{ _initContainer.name }}"
+                image: "{{ _initContainer.image }}"
+      {% if flightdeck_cluster.web.initContainers.command is defined %}
+                command:
+      {% for _command in flightdeck_cluster.web.initContainers | default([]) %}
+                  - "{{ _command }}"
+      {% endfor %}
+      {% endif %}
+      {% if (flightdeck_cluster.web.secrets is defined) or (flightdeck_cluster.web.configMaps is defined) or (flightdeck_cluster.web.volumes is defined) %}
+                volumeMounts:
+      {% for _volume in flightdeck_cluster.web.volumes | default([]) %}
+                  - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                    mountPath: "{{ _volume.path | default('/mnt/' + _volume.name ) }}"
+      {% if _volume.subPath is defined %}
+                    subPath: "{{ _volume.subPath }}"
+      {% endif %}
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.web.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.web.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+      {% endif %}
+      {% endfor %}
+      {% endif %}
             containers:
               - image: {{ flightdeck_cluster.web.image | default('ten7/flight-deck-web:latest') }}
                 imagePullPolicy: {{ flightdeck_cluster.web.imagePullPolicy | default('Always') }}
