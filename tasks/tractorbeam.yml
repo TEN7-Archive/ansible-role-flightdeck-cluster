@@ -63,6 +63,13 @@
                         name: vol-tractorbeam-cache
                         subPath: tractorbeam
       {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                      - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                        mountPath: "{{ _volume.path | default('/mnt/' + _volume.name ) }}"
+      {% if _volume.subPath is defined %}
+                        subPath: "{{ _volume.subPath }}"
+      {% endif %}
+      {% endfor %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                       - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                         mountPath: "{{ _secret.path | default('/secrets') }}"
@@ -80,6 +87,11 @@
                     persistentVolumeClaim:
                       claimName: tractorbeam-cache-daily
       {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                  - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                    persistentVolumeClaim:
+                      claimName: "{{ _volume.name }}"
+      {% endfor %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                   - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                     secret:
@@ -133,6 +145,13 @@
                         name: vol-tractorbeam-cache
                         subPath: tractorbeam
       {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                      - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                        mountPath: "{{ _volume.path | default('/mnt/' + _volume.name ) }}"
+      {% if _volume.subPath is defined %}
+                        subPath: "{{ _volume.subPath }}"
+      {% endif %}
+      {% endfor %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                       - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                         mountPath: "{{ _secret.path | default('/secrets') }}"
@@ -150,6 +169,11 @@
                     persistentVolumeClaim:
                       claimName: tractorbeam-cache-weekly
       {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                  - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                    persistentVolumeClaim:
+                      claimName: "{{ _volume.name }}"
+      {% endfor %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                   - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                     secret:
@@ -203,6 +227,13 @@
                         name: vol-tractorbeam-cache
                         subPath: tractorbeam
       {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                      - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                        mountPath: "{{ _volume.path | default('/mnt/' + _volume.name ) }}"
+      {% if _volume.subPath is defined %}
+                        subPath: "{{ _volume.subPath }}"
+      {% endif %}
+      {% endfor %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                       - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                         mountPath: "{{ _secret.path | default('/secrets') }}"
@@ -220,6 +251,11 @@
                     persistentVolumeClaim:
                       claimName: tractorbeam-cache-monthly
       {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                  - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                    persistentVolumeClaim:
+                      claimName: "{{ _volume.name }}"
+      {% endfor %}
       {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
                   - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
                     secret:
