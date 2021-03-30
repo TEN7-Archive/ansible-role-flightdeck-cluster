@@ -77,7 +77,7 @@
                 image: "{{ _initContainer.image }}"
       {% if flightdeck_cluster.web.initContainers.command is defined %}
                 command:
-      {% for _command in flightdeck_cluster.web.initContainers | default([]) %}
+      {% for _command in flightdeck_cluster.web.initContainers.command | default([]) %}
                   - "{{ _command }}"
       {% endfor %}
       {% endif %}
