@@ -152,6 +152,7 @@
               {% if flightdeck_cluster.gitlabRunner.runners.runUntagged | default(false) %}
               --run-untagged=true \
               {% endif %}
+              --kubernetes-pull-policy {{ flightdeck_cluster.gitlabRunner.pullPolicy | default('always') }}
               --non-interactive
 
             retval=$?
