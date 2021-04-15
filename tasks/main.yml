@@ -44,10 +44,16 @@
   include_tasks: 'certManager.yml'
   when:
     - flightdeck_cluster.certManager is defined
-- name: Work with ingress
+- name: Work with ingresses
   include_tasks: 'ingress.yml'
+  loop: "{{ flightdeck_cluster.ingresses | default([_ingress_default]) }}"
+  loop_control:
+    label: "{{ _ingress.name | default('ingress') }}"
+    loop_var: _ingress
+  vars:
+    _ingress_default: "{{ flightdeck_cluster.ingress | default() }}"
   when:
-    - flightdeck_cluster.ingress is defined
+    - (flightdeck_cluster.ingress is defined) or (flightdeck_cluster.ingresses is defined)
 - name: Work with cronjobs
   include_tasks: 'cron.yml'
   when:

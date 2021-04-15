@@ -375,20 +375,20 @@ Alternatively, create a separate playbook entirely to deploy Cert Manager.
 
 This role provides the ability to manage ingress definitions. It does *not* provide an ingress controller.
 
-To manage the ingress definition, create the `flightdeck_cluster.ingress` item:
+To manage the ingress definition, create the `flightdeck_cluster.ingresses` list. Each item in the list represents a new ingress definition:
 
 ```yaml
 flightdeck_cluster:
-  ingress:
-    rules:
-      - host: "example.com"
-        paths:
-          - path: "/"
-            backend: "web"
-            port: "6081"
+  ingresses:
+    - rules:
+        - host: "example.com"
+          paths:
+            - path: "/"
+              backend: "web"
+              port: "6081"
 ```
 
-The `flightdeck_cluster.ingress.rules` key is a list routing rules for your cluster.
+The `rules` key of each item is a list routing rules for your cluster.
 
 Each item in the list has the following items:
 
@@ -405,18 +405,18 @@ Each item in the `paths` list has the following:
 
 Many ingress controllers will terminate HTTPS, allowing traffic to be unencrypted internally to the cluster.
 
-Certificate chains can be created as secrets then used by defining `flightdeck_cluster.ingress.tls`.
+Certificate chains can be created as secrets then used by defining the `tls` item.
 
 ```yaml
 flightdeck_cluster:
-  ingress:
-    tls:
-      - secret: "mycertchain"
-        hosts:
-          - "example.com"
+  ingresses:
+    - tls:
+        - secret: "mycertchain"
+          hosts:
+            - "example.com"
 ```
 
-Each item under `flightdeck_cluster.ingress.tls` has the following items:
+Each item under `tls` has the following items:
 
 * **secret** is the secret name containing the certificate chain.
 * **hosts** is a list of hosts, including subdomains, for which to use the cert.
@@ -427,12 +427,12 @@ If you've defined `flightdeck_cluster.certManager` and configured one or more Le
 
 ```yaml
 flightdeck_cluster:
-  ingress:
-    tlsIssuer: "my-lets-encrypt-prod-issuer"
-    tls:
-      - secret: "lets-encrypt-private-key"
-        hosts:
-          - "example.com"
+  ingresses:
+    - tlsIssuer: "my-lets-encrypt-prod-issuer"
+      tls:
+        - secret: "lets-encrypt-private-key"
+          hosts:
+            - "example.com"
 ```
 
 The `tlsIssuer` item instructs the ingress defition to use an issuer you created in `flightdeck_cluster.certManager.letsEncrypt`. The `secret` for each `tls` item must match the secret name for the given issuer. Note, that if you didn't define a `secret` for the issuer, the issuer name is used by default.
@@ -441,8 +441,8 @@ The `tlsIssuer` item instructs the ingress defition to use an issuer you created
 
 ```yaml
 flightdeck_cluster:
-  ingress:
-    maxBodySize: "50m"
+  ingresses:
+    - maxBodySize: "50m"
 ```
 
 * **maxBodySize** is the max HTTP POST size accepted by the ingress. Optional, defaults to `128m`.
