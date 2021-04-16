@@ -123,6 +123,7 @@
           listen_address = '[::]:9252'
           {% endif %}
 
+
         configure: |
           set -e
           cp /init-secrets/* /secrets
@@ -152,7 +153,10 @@
               {% if flightdeck_cluster.gitlabRunner.runners.runUntagged | default(false) %}
               --run-untagged=true \
               {% endif %}
-              --kubernetes-pull-policy {{ flightdeck_cluster.gitlabRunner.pullPolicy | default('always') }}
+              {% if flightdeck_cluster.gitlabRunner.runners.imagePullSecrets is defined %}
+              --kubernetes-image-pull-secrets {{ flightdeck_cluster.gitlabRunner.runners.imagePullSecrets | join(' ') | quote }}
+              {% endif %}
+              --kubernetes-pull-policy {{ flightdeck_cluster.gitlabRunner.pullPolicy | default('if-not-present') }} \
               --non-interactive
 
             retval=$?
