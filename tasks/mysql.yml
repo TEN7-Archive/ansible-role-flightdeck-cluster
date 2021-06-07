@@ -47,7 +47,7 @@
                     subPath: dbdata
             containers:
               - name: "db"
-                image: {{ flightdeck_cluster.mysql.image | default('ten7/flight-deck-db:10') }}
+                image: {{ flightdeck_cluster.mysql.image | default('ten7/flight-deck-db:10.3') }}
                 imagePullPolicy: Always
                 ports:
                   - containerPort: 3306

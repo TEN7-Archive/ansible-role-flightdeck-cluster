@@ -30,6 +30,8 @@
     wait_timeout: "{{ flightdeck_cluster.web.timeout | default(300) }}"
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
   loop: "{{ _pod_list }}"
+  loop_control:
+    label: "{{ item.metadata.name }}"
   when:
     - flightdeck_cluster.web.delete | default(false) | bool
 - name: Create web deployment
