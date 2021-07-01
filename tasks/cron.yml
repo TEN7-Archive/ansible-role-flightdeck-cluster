@@ -84,3 +84,5 @@
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
   loop: "{{ flightdeck_cluster.cron | default([]) }}"
+  loop_control:
+    label: "{{ item.name }}"
