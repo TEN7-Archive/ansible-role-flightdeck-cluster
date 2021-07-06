@@ -22,10 +22,18 @@
             nodeSelector:
               {{ flightdeck_cluster.memcache.nodeSelector.key }}: {{ flightdeck_cluster.memcache.nodeSelector.value }}
       {% endif %}
+      {% if (flightdeck_cluster.memcache.affinity is defined) %}
+            affinity:
+              {{ flightdeck_cluster.memcache.affinity | to_nice_yaml(indent=2) | indent(8) }}
+      {% endif %}
             containers:
               - image: "{{ flightdeck_cluster.memcache.image | default('memcached:1.5-alpine') }}"
                 imagePullPolicy: Always
                 name: "memcache"
+      {% if (flightdeck_cluster.memcache.resources is defined) %}
+                resources:
+                  {{ flightdeck_cluster.memcache.resources | to_nice_yaml(indent=2) | indent(12) }}
+      {% endif %}
       {% if flightdeck_cluster.memcache.memory is defined %}
                 command:
                   - "memcached"

@@ -28,6 +28,10 @@
             nodeSelector:
               {{ flightdeck_cluster.solr.nodeSelector.key }}: {{ flightdeck_cluster.solr.nodeSelector.value }}
       {% endif %}
+      {% if (flightdeck_cluster.solr.affinity is defined) %}
+            affinity:
+              {{ flightdeck_cluster.solr.affinity | to_nice_yaml(indent=2) | indent(8) }}
+      {% endif %}
             initContainers:
               # The PV is owned by root by default. This means that a non-root container
               # cannot create directories. So, we change the ownership to the UID/GID of
@@ -46,6 +50,10 @@
               - image: "{{ flightdeck_cluster.solr.image | default('ten7/flight-deck-solr:6') }}"
                 imagePullPolicy: Always
                 name: "solr"
+      {% if (flightdeck_cluster.solr.resources is defined) %}
+                resources:
+                  {{ flightdeck_cluster.solr.resources | to_nice_yaml(indent=2) | indent(12) }}
+      {% endif %}
                 ports:
                   - containerPort: 8983
                     name: solr

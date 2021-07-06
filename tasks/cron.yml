@@ -22,10 +22,18 @@
                 nodeSelector:
                   {{ item.nodeSelector.key }}: {{ item.nodeSelector.value }}
       {% endif %}
+      {% if (item.affinity is defined) %}
+                affinity:
+                  {{ item.affinity | to_nice_yaml(indent=2) | indent(12) }}
+      {% endif %}
                 containers:
                   - name: cron
                     image: "{{ item.image }}"
                     imagePullPolicy: {{ item.imagePullPolicy | default('Always') }}
+      {% if (item.resources is defined) %}
+                    resources:
+                      {{ item.resources | to_nice_yaml(indent=2) | indent(16) }}
+      {% endif %}
       {% if item.command is defined %}
                     command:
       {% for _command in item.command %}

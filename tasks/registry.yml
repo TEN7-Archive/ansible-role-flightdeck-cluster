@@ -23,6 +23,10 @@
             nodeSelector:
               {{ flightdeck_cluster.registry.nodeSelector.key }}: {{ flightdeck_cluster.registry.nodeSelector.value }}
       {% endif %}
+      {% if (flightdeck_cluster.registry.affinity is defined) %}
+            affinity:
+              {{ flightdeck_cluster.registry.affinity | to_nice_yaml(indent=2) | indent(8) }}
+      {% endif %}
       {% if flightdeck_cluster.registry.env is defined %}
             env:
       {% for _env in flightdeck_cluster.registry.env | default([]) %}
@@ -34,6 +38,10 @@
               - image: {{ flightdeck_cluster.registry.image | default('registry:2.7') }}
                 imagePullPolicy: Always
                 name: registry
+      {% if (flightdeck_cluster.registry.resources is defined) %}
+                resources:
+                  {{ flightdeck_cluster.registry.resources | to_nice_yaml(indent=2) | indent(12) }}
+      {% endif %}
                 ports:
                   - containerPort: 5000
       {% if (flightdeck_cluster.registry.secrets is defined) or (flightdeck_cluster.registry.configMaps is defined) or (flightdeck_cluster.registry.volumes is defined) %}

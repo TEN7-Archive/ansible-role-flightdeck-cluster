@@ -211,6 +211,47 @@ Where:
 * **nodeselector.key** is the name of the label to match against nodes.
 * **nodeselector.value** is the label value to match against nodes.
 
+For more advanced placement, you can use the `affinity` key to specify a [Node Affinity](https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/):
+
+```yaml
+flightdeck_cluster:
+  web:
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - web
+          topologyKey: kubernetes.io/hostname
+```
+
+Where:
+
+* **affinity** is a node affinity. See the [Kubernetes docs](https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/) about node affinities for details as to content and use.
+
+#### Specifying resource requests and limits
+
+Often, you will want to specify a minimum ("requests") and maximum ("limits") amount of physical resources needed by a service. You can do this with the `resources` key:
+
+```yaml
+flightdeck_cluster:
+  web:
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+```
+
+Where:
+
+* **resources** is the resource requests and limits according to the [Kubernetes docs on resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+
 ### The memcache service
 
 The `flightdeck_cluster.memcache` item describes the memcache service to create in the cluster.
@@ -253,6 +294,8 @@ Where:
 * **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.mysql` is defined.
 * **image** is the image to use. Optional, defaults to `ten7/flight-deck-db:10`.
 * **nodeSelector** is the key/value pair to use to place the pod in the cluster. Optional, works like the `web` service.
+* **affinity** is the node affinity to place the pod in the cluster. Optional, works like the `web` service.
+* **resources** is the container physical resource requests and limits. Optional, works like the `web` service.
 * **size** is the size of the Persistent Volume to attach to the service.
 * **secrets** are the secrets to mount in the container. Optional. Works like the `web` service.
 * **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.
@@ -278,6 +321,8 @@ Where:
 * **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.tractorbeam` is defined.
 * **image** is the image to use for the backup cronjobs. Optional, defaults to `ten7/tractorbeam:latest`.
 * **nodeSelector** is the key/value pair to use to place the pod in the cluster. Optional, works like the `web` service.
+* **affinity** is the node affinity to place the pod in the cluster. Optional, works like the `web` service.
+* **resources** is the container physical resource requests and limits. Optional, works like the `web` service.
 * **dailySchedule** is the crontab formatted schedule on which to run the daily backup. Optional. Defaults to 12am UTC every day.
 * **weeklySchedule** is the crontab formatted schedule on which to run the weekly backup. Optional. Defaults to 2am URT every Sunday.
 * **monthlySchedule** is the crontab formatted schedule on which to run the monthly backup. Optional. Defaults to 4am UTC on the first of each month.
@@ -306,6 +351,8 @@ Where:
 * **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.solr` is defined.
 * **image** is the image to use for the Solr container. Optional, defaults to `ten7/flight-deck-solr:6`.
 * **nodeSelector** is the key/value pair to use to place the pod in the cluster. Optional, works like the `web` service.
+* **affinity** is the node affinity to place the pod in the cluster. Optional, works like the `web` service.
+* **resources** is the container physical resource requests and limits. Optional, works like the `web` service.
 * **size** is the size of Persistent Volume to attach to the Solr container.
 * **secrets** are the secrets to mount in the container. Optional. Works like the `web` service.
 * **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.
@@ -505,6 +552,8 @@ Where:
 * **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.tractorbeam` is defined.
 * **image** is the image to use for the backup cronjobs. Optional, defaults to `ten7/tractorbeam:latest`.
 * **nodeSelector** is the key/value pair to use to place the pod in the cluster. Optional, works like the `web` service.
+* **affinity** is the node affinity to place the pod in the cluster. Optional, works like the `web` service.
+* **resources** is the container physical resource requests and limits. Optional, works like the `web` service.
 * **schedule** is the crontab formatted schedule on which to run the job. Required.
 * **command** is the command (entrypoint) to run in the pod. Optional.
 * **args** are the arguments to pass to the command. Optional.

@@ -70,6 +70,10 @@
             nodeSelector:
               {{ flightdeck_cluster.web.nodeSelector.key }}: {{ flightdeck_cluster.web.nodeSelector.value }}
       {% endif %}
+      {% if (flightdeck_cluster.web.affinity is defined) %}
+            affinity:
+              {{ flightdeck_cluster.web.affinity | to_nice_yaml(indent=2) | indent(8) }}
+      {% endif %}
             securityContext:
               fsGroup: {{ flightdeck_cluster.web.fsGroup | default('1000') }}
       {% if flightdeck_cluster.web.initContainers is defined %}
@@ -107,6 +111,10 @@
               - image: {{ flightdeck_cluster.web.image | default('ten7/flight-deck-web:latest') }}
                 imagePullPolicy: {{ flightdeck_cluster.web.imagePullPolicy | default('Always') }}
                 name: web
+      {% if (flightdeck_cluster.web.resources is defined) %}
+                resources:
+                  {{ flightdeck_cluster.web.resources | to_nice_yaml(indent=2) | indent(12) }}
+      {% endif %}
                 ports:
                   - containerPort: 80
       {% if (flightdeck_cluster.web.secrets is defined) or (flightdeck_cluster.web.configMaps is defined) or (flightdeck_cluster.web.volumes is defined) %}
@@ -130,6 +138,10 @@
               - image: {{ flightdeck_cluster.web.varnish.image | default('ten7/flightdeck-varnish-6.4') }}
                 imagePullPolicy: {{ flightdeck_cluster.web.imagePullPolicy | default('Always') }}
                 name: varnish
+      {% if (flightdeck_cluster.web.varnishResources is defined) %}
+                resources:
+                  {{ flightdeck_cluster.web.varnishResources | to_nice_yaml | indent(12) }}
+      {% endif %}
                 ports:
                   - name: "varnish-http"
                     containerPort: 6081
