@@ -33,7 +33,7 @@
           heritage: Tiller
       rules:
         - apiGroups: [""]
-          resources: ["pods", "pods/exec", "secrets"]
+          resources: ["pods", "pods/exec", "pods/attach", "secrets", "configmaps"]
           verbs: ["get", "list", "watch", "create", "patch", "delete"]
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace }}"
