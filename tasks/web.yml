@@ -49,12 +49,17 @@
         selector:
           matchLabels:
             app: web
+      {% if flightdeck_cluster.web.strategy is defined %}
+        strategy:
+          {{ flightdeck_cluster.web.affinity | to_nice_yaml(indent=2) | indent(4) }}
+      {% else %}
         strategy:
           type: RollingUpdate
           rollingUpdate:
             maxSurge: 1
             maxUnavailable: 1
-        minReadySeconds: 30
+      {% endif %}
+        minReadySeconds: {{ flightdeck_cluster.web.minReadySeconds | default(30) }}
         template:
           metadata:
             labels:
