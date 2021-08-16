@@ -37,7 +37,7 @@
               # cannot create directories. So, we change the ownership to the UID/GID of
               # the account under which the database container runs.
               - name: "fix-pvc-permissions"
-                image: "alpine:3.9"
+                image: "alpine"
                 command:
                   - "sh"
                   - "-c"
@@ -47,7 +47,7 @@
                     mountPath: "/data"
                     subPath: "solr-data"
             containers:
-              - image: "{{ flightdeck_cluster.solr.image | default('ten7/flight-deck-solr:6') }}"
+              - image: "{{ flightdeck_cluster.solr.image | default('ten7/flightdeck-solr-8') }}"
                 imagePullPolicy: Always
                 name: "solr"
       {% if (flightdeck_cluster.solr.resources is defined) %}

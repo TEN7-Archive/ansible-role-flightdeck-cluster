@@ -40,7 +40,7 @@
               # cannot create directories. So, we change the ownership to the UID/GID of
               # the account under which the database container runs.
               - name: "fix-pvc-permissions"
-                image: "alpine:3.9"
+                image: "alpine"
                 command:
                   - "sh"
                   - "-c"
@@ -51,7 +51,7 @@
                     subPath: dbdata
             containers:
               - name: "db"
-                image: {{ flightdeck_cluster.mysql.image | default('ten7/flight-deck-db:10.3') }}
+                image: {{ flightdeck_cluster.mysql.image | default('ten7/flightdeck-db-10.4') }}
                 imagePullPolicy: Always
       {% if (flightdeck_cluster.mysql.resources is defined) %}
                 resources:

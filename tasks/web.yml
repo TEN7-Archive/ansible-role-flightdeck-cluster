@@ -113,7 +113,7 @@
       {% endfor %}
       {% endif %}
             containers:
-              - image: {{ flightdeck_cluster.web.image | default('ten7/flight-deck-web:latest') }}
+              - image: {{ flightdeck_cluster.web.image | default('ten7/flightdeck-web-7.4') }}
                 imagePullPolicy: {{ flightdeck_cluster.web.imagePullPolicy | default('Always') }}
                 name: web
       {% if (flightdeck_cluster.web.resources is defined) %}
@@ -257,7 +257,7 @@
             securityContext:
               fsGroup: {{ flightdeck_cluster.web.fsGroup | default('1000') }}
             containers:
-              - image: {{ flightdeck_cluster.web.image | default('ten7/flight-deck-web:latest') }}
+              - image: {{ flightdeck_cluster.web.image | default('ten7/flightdeck-web-7.4') }}
                 imagePullPolicy: {{ flightdeck_cluster.web.imagePullPolicy | default('Always') }}
                 name: web
                 ports:
@@ -280,7 +280,7 @@
                     mountPath: "{{ _config.path | default('/config') }}"
       {% endfor %}
       {% endif %}
-              - image: {{ flightdeck_cluster.web.varnish.image | default('ten7/flight-deck-varnish') }}
+              - image: {{ flightdeck_cluster.web.varnish.image | default('ten7/flightdeck-varnish-6.4') }}
                 imagePullPolicy: {{ flightdeck_cluster.web.imagePullPolicy | default('Always') }}
                 name: varnish
                 ports:
