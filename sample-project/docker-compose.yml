@@ -1,0 +1,55 @@
+version: '3'
+services:
+  web:
+    image: ten7/flightdeck-web-7.4
+    environment:
+      MYSQL_NAME: drupal
+      MYSQL_USER: drupal
+      MYSQL_PASS: drupal
+    ports:
+      - "80:80"
+    volumes:
+      - ./src:/var/www/html:cached
+      - ./config:/var/www/config:cached
+      - ./db-backups:/var/www/db-backups:cached
+      - ./flight-deck.yml:/config/web/flightdeck-web.yml
+  db:
+    image: ten7/flightdeck-db-10.3
+    ports:
+      - 3306:3306
+    volumes:
+      - /var/lib/mysql
+      - ./db-backups:/tmp/db-backups:cached
+      - ./flight-deck.yml:/config/mysql/flightdeck-db.yml
+  memcached:
+    image: memcached:1.6-alpine
+  pma:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root
+      PHP_UPLOAD_MAX_FILESIZE: 1G
+      PHP_MAX_INPUT_VARS: 1G
+    ports:
+     - "8001:80"
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8002:8025"
+  solr:
+    image: ten7/flightdeck-solr-6
+    volumes:
+      - ./solr-conf/6.x:/solr-conf
+      - ./flight-deck.yml:/config/solr/flightdeck-solr.yml
+    ports:
+      - "8003:8983"
+  varnish:
+    image: "ten7/flightdeck-varnish-6.4"
+    depends_on:
+      - web
+    volumes:
+      - ./flight-deck.yml:/config/varnish/flightdeck-varnish.yml
+    ports:
+      - "8004:6081"
+      - "8005:6082"
