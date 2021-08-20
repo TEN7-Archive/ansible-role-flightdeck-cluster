@@ -1,0 +1,271 @@
+---
+- name: Create tractorbeam volumes
+  k8s:
+    state: "{{ flightdeck_cluster.tractorbeam.state | default('present') }}"
+    definition: |
+      ---
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: {{ item }}
+      spec:
+        storageClassName: "{{ flightdeck_cluster.tractorbeam.class | default(omit) }}"
+        accessModes:
+          - {{ flightdeck_cluster.tractorbeam.mode | default('ReadWriteOnce') }}
+        resources:
+          requests:
+            storage: {{ flightdeck_cluster.tractorbeam.size }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+  when:
+    - flightdeck_cluster.tractorbeam.size | default(false) != false
+  loop:
+    - "tractorbeam-cache-daily"
+    - "tractorbeam-cache-weekly"
+    - "tractorbeam-cache-monthly"
+- name: Create tractorbeam daily cron
+  k8s:
+    state: "{{ flightdeck_cluster.tractorbeam.state | default('present') }}"
+    definition: |
+      apiVersion: batch/v1beta1
+      kind: CronJob
+      metadata:
+        name: tractorbeam-daily
+      spec:
+        schedule: "{{ flightdeck_cluster.tractorbeam.dailySchedule | default('0 0 * * *') }}"
+        successfulJobsHistoryLimit: 0
+        failedJobsHistoryLimit: 1
+        concurrencyPolicy: Forbid
+        jobTemplate:
+          spec:
+            template:
+              spec:
+      {% if (flightdeck_cluster.tractorbeam.nodeSelector is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.key is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.value is defined) %}
+                nodeSelector:
+                  {{ flightdeck_cluster.tractorbeam.nodeSelector.key }}: {{ flightdeck_cluster.tractorbeam.nodeSelector.value }}
+      {% endif %}
+                securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                  fsGroup: 2000
+                containers:
+                  - name: tractorbeam
+                    image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
+                    imagePullPolicy: Always
+                    command:
+                      - tractorbeam
+                    args:
+                      - daily
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
+                    volumeMounts:
+      {% if flightdeck_cluster.tractorbeam.size | default(false) != false %}
+                      - mountPath: /backups
+                        name: vol-tractorbeam-cache
+                        subPath: tractorbeam
+      {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                      - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                        mountPath: "{{ _volume.path | default('/mnt/' + _volume.name ) }}"
+      {% if _volume.subPath is defined %}
+                        subPath: "{{ _volume.subPath }}"
+      {% endif %}
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
+                      - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                        mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.tractorbeam.configMaps | default([]) %}
+                      - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                        mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+      {% endif %}
+                restartPolicy: OnFailure
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
+                volumes:
+      {% if flightdeck_cluster.tractorbeam.size | default(false) != false %}
+                  - name: vol-tractorbeam-cache
+                    persistentVolumeClaim:
+                      claimName: tractorbeam-cache-daily
+      {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                  - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                    persistentVolumeClaim:
+                      claimName: "{{ _volume.name }}"
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    secret:
+                      secretName: "{{ _secret.name }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.tractorbeam.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    configMap:
+                      name: "{{ _config.name }}"
+      {% endfor %}
+      {% endif %}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create tractorbeam weekly cron
+  k8s:
+    state: "{{ flightdeck_cluster.tractorbeam.state | default('present') }}"
+    definition: |
+      apiVersion: batch/v1beta1
+      kind: CronJob
+      metadata:
+        name: tractorbeam-weekly
+      spec:
+        schedule: "{{ flightdeck_cluster.tractorbeam.weeklySchedule | default('0 2 * * 0') }}"
+        successfulJobsHistoryLimit: 0
+        failedJobsHistoryLimit: 1
+        concurrencyPolicy: Forbid
+        jobTemplate:
+          spec:
+            template:
+              spec:
+      {% if (flightdeck_cluster.tractorbeam.nodeSelector is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.key is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.value is defined) %}
+                nodeSelector:
+                  {{ flightdeck_cluster.tractorbeam.nodeSelector.key }}: {{ flightdeck_cluster.tractorbeam.nodeSelector.value }}
+      {% endif %}
+                securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                  fsGroup: 2000
+                containers:
+                  - name: tractorbeam
+                    image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
+                    imagePullPolicy: Always
+                    command:
+                      - tractorbeam
+                    args:
+                      - weekly
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
+                    volumeMounts:
+      {% if flightdeck_cluster.tractorbeam.size | default(false) != false %}
+                      - mountPath: /backups
+                        name: vol-tractorbeam-cache
+                        subPath: tractorbeam
+      {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                      - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                        mountPath: "{{ _volume.path | default('/mnt/' + _volume.name ) }}"
+      {% if _volume.subPath is defined %}
+                        subPath: "{{ _volume.subPath }}"
+      {% endif %}
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
+                      - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                        mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.tractorbeam.configMaps | default([]) %}
+                      - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                        mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+      {% endif %}
+                restartPolicy: OnFailure
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
+                volumes:
+      {% if flightdeck_cluster.tractorbeam.size | default(false) != false %}
+                  - name: vol-tractorbeam-cache
+                    persistentVolumeClaim:
+                      claimName: tractorbeam-cache-weekly
+      {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                  - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                    persistentVolumeClaim:
+                      claimName: "{{ _volume.name }}"
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    secret:
+                      secretName: "{{ _secret.name }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.tractorbeam.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    configMap:
+                      name: "{{ _config.name }}"
+      {% endfor %}
+      {% endif %}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create tractorbeam monthly cron
+  k8s:
+    state: "{{ flightdeck_cluster.tractorbeam.state | default('present') }}"
+    definition: |
+      apiVersion: batch/v1beta1
+      kind: CronJob
+      metadata:
+        name: tractorbeam-monthly
+      spec:
+        schedule: "{{ flightdeck_cluster.tractorbeam.monthlySchedule | default('0 4 1 * *') }}"
+        successfulJobsHistoryLimit: 0
+        failedJobsHistoryLimit: 1
+        concurrencyPolicy: Forbid
+        jobTemplate:
+          spec:
+            template:
+              spec:
+      {% if (flightdeck_cluster.tractorbeam.nodeSelector is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.key is defined) and (flightdeck_cluster.tractorbeam.nodeSelector.value is defined) %}
+                nodeSelector:
+                  {{ flightdeck_cluster.tractorbeam.nodeSelector.key }}: {{ flightdeck_cluster.tractorbeam.nodeSelector.value }}
+      {% endif %}
+                securityContext:
+                  runAsUser: 1000
+                  runAsGroup: 1000
+                  fsGroup: 2000
+                containers:
+                  - name: tractorbeam
+                    image: "{{ flightdeck_cluster.tractorbeam.image | default('ten7/tractorbeam:latest') }}"
+                    imagePullPolicy: Always
+                    command:
+                      - tractorbeam
+                    args:
+                      - monthly
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
+                    volumeMounts:
+      {% if flightdeck_cluster.tractorbeam.size | default(false) != false %}
+                      - mountPath: /backups
+                        name: vol-tractorbeam-cache
+                        subPath: tractorbeam
+      {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                      - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                        mountPath: "{{ _volume.path | default('/mnt/' + _volume.name ) }}"
+      {% if _volume.subPath is defined %}
+                        subPath: "{{ _volume.subPath }}"
+      {% endif %}
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
+                      - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                        mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.tractorbeam.configMaps | default([]) %}
+                      - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                        mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+      {% endif %}
+                restartPolicy: OnFailure
+      {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
+                volumes:
+      {% if flightdeck_cluster.tractorbeam.size | default(false) != false %}
+                  - name: vol-tractorbeam-cache
+                    persistentVolumeClaim:
+                      claimName: tractorbeam-cache-monthly
+      {% endif %}
+      {% for _volume in flightdeck_cluster.tractorbeam.volumes | default([]) %}
+                  - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                    persistentVolumeClaim:
+                      claimName: "{{ _volume.name }}"
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.tractorbeam.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    secret:
+                      secretName: "{{ _secret.name }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.tractorbeam.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    configMap:
+                      name: "{{ _config.name }}"
+      {% endfor %}
+      {% endif %}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"

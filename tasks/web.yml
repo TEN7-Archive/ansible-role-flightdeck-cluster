@@ -1,0 +1,374 @@
+---
+- name: Get web pods
+  set_fact:
+    _pod_list: "{{ lookup('k8s', kind='Pod', namespace=flightdeck_cluster.namespace, label_selector='app=web', kubeconfig=_kubeconfig_path, wantlist=True) }}"
+  when:
+    - flightdeck_cluster.web.delete | default(false) | bool
+  vars:
+    _kubeconfig_path: "{{ flightdeck_cluster_kubeconfig | default('') }}"
+- name: Delete the existing web deployment
+  k8s:
+    state: absent
+    api_version: "apps/v1"
+    kind: "deployment"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+    name: "web"
+    wait: "{{ flightdeck_cluster.web.wait | default(false) }}"
+    wait_timeout: "{{ flightdeck_cluster.web.timeout | default(300) }}"
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+  when:
+    - flightdeck_cluster.web.delete | default(false) | bool
+# @see https://github.com/ansible/ansible/issues/42302
+- name: Delete orphaned web pods
+  k8s:
+    state: absent
+    api_version: "v1"
+    kind: "pod"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+    name: "{{ item.metadata.name }}"
+    wait: "{{ flightdeck_cluster.web.wait | default(false) }}"
+    wait_timeout: "{{ flightdeck_cluster.web.timeout | default(300) }}"
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+  loop: "{{ _pod_list }}"
+  loop_control:
+    label: "{{ item.metadata.name }}"
+  when:
+    - flightdeck_cluster.web.delete | default(false) | bool
+- name: Create web deployment
+  k8s:
+    state: "{{ flightdeck_cluster.web.state | default('present') }}"
+    definition: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        labels:
+          app: web
+        name: web
+      spec:
+        replicas: {{ flightdeck_cluster.web.replicas | default('3') }}
+        selector:
+          matchLabels:
+            app: web
+      {% if flightdeck_cluster.web.strategy is defined %}
+        strategy:
+          {{ flightdeck_cluster.web.affinity | to_nice_yaml(indent=2) | indent(4) }}
+      {% else %}
+        strategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxSurge: 1
+            maxUnavailable: 1
+      {% endif %}
+        minReadySeconds: {{ flightdeck_cluster.web.minReadySeconds | default(30) }}
+        template:
+          metadata:
+            labels:
+              app: web
+      {% if flightdeck_cluster.web.annotations is defined %}
+            annotations:
+      {% for _annotation in flightdeck_cluster.web.annotations | default([]) %}
+              {{ _annotation.key }}: {{ _annotation.value }}
+      {% endfor %}
+      {% endif %}
+          spec:
+      {% if (flightdeck_cluster.web.nodeSelector is defined) and (flightdeck_cluster.web.nodeSelector.key is defined) and (flightdeck_cluster.web.nodeSelector.value is defined) %}
+            nodeSelector:
+              {{ flightdeck_cluster.web.nodeSelector.key }}: {{ flightdeck_cluster.web.nodeSelector.value }}
+      {% endif %}
+      {% if (flightdeck_cluster.web.affinity is defined) %}
+            affinity:
+              {{ flightdeck_cluster.web.affinity | to_nice_yaml(indent=2) | indent(8) }}
+      {% endif %}
+            securityContext:
+              fsGroup: {{ flightdeck_cluster.web.fsGroup | default('1000') }}
+      {% if flightdeck_cluster.web.initContainers is defined %}
+            initContainers:
+      {% for _initContainer in flightdeck_cluster.web.initContainers | default([]) %}
+              - name: "{{ _initContainer.name }}"
+                image: "{{ _initContainer.image }}"
+      {% if flightdeck_cluster.web.initContainers.command is defined %}
+                command:
+      {% for _command in flightdeck_cluster.web.initContainers.command | default([]) %}
+                  - "{{ _command }}"
+      {% endfor %}
+      {% endif %}
+      {% if (flightdeck_cluster.web.secrets is defined) or (flightdeck_cluster.web.configMaps is defined) or (flightdeck_cluster.web.volumes is defined) %}
+                volumeMounts:
+      {% for _volume in flightdeck_cluster.web.volumes | default([]) %}
+                  - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                    mountPath: "{{ _volume.path | default('/mnt/' + _volume.name ) }}"
+      {% if _volume.subPath is defined %}
+                    subPath: "{{ _volume.subPath }}"
+      {% endif %}
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.web.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.web.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+      {% endif %}
+      {% endfor %}
+      {% endif %}
+            containers:
+              - image: {{ flightdeck_cluster.web.image | default('ten7/flightdeck-web-7.4') }}
+                imagePullPolicy: {{ flightdeck_cluster.web.imagePullPolicy | default('Always') }}
+                name: web
+      {% if (flightdeck_cluster.web.resources is defined) %}
+                resources:
+                  {{ flightdeck_cluster.web.resources | to_nice_yaml(indent=2) | indent(12) }}
+      {% endif %}
+                ports:
+                  - containerPort: 80
+      {% if (flightdeck_cluster.web.secrets is defined) or (flightdeck_cluster.web.configMaps is defined) or (flightdeck_cluster.web.volumes is defined) %}
+                volumeMounts:
+      {% for _volume in flightdeck_cluster.web.volumes | default([]) %}
+                  - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                    mountPath: "{{ _volume.path | default('/mnt/' + _volume.name ) }}"
+      {% if _volume.subPath is defined %}
+                    subPath: "{{ _volume.subPath }}"
+      {% endif %}
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.web.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.web.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+      {% endif %}
+              - image: {{ flightdeck_cluster.web.varnish.image | default('ten7/flightdeck-varnish-6.4') }}
+                imagePullPolicy: {{ flightdeck_cluster.web.imagePullPolicy | default('Always') }}
+                name: varnish
+      {% if (flightdeck_cluster.web.varnishResources is defined) %}
+                resources:
+                  {{ flightdeck_cluster.web.varnishResources | to_nice_yaml | indent(12) }}
+      {% endif %}
+                ports:
+                  - name: "varnish-http"
+                    containerPort: 6081
+                    protocol: TCP
+                  - name: "varnish-control"
+                    containerPort: 6082
+                    protocol: TCP
+                env:
+                  - name: "VARNISH_SECRET"
+                    value: "{{ flightdeck_cluster.web.varnish.secret | default('secret') }}"
+                  - name: "VARNISH_BACKEND_HOST"
+                    value: "localhost"
+                  - name: "VARNISH_BACKEND_PORT"
+                    value: "80"
+                  - name: "VARNISH_MEMORY_SIZE"
+                    value: "{{ flightdeck_cluster.web.varnish.memory | default('256M') }}"
+                  - name: "VARNISH_STORAGE_SIZE"
+                    value: "{{ flightdeck_cluster.web.varnish.storage | default('1024M') }}"
+      {% if (flightdeck_cluster.web.secrets is defined) or (flightdeck_cluster.web.configMaps is defined) %}
+                volumeMounts:
+      {% for _secret in flightdeck_cluster.web.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.web.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+      {% endif %}
+      {% if flightdeck_cluster.web.hostAliases is defined %}
+            hostAliases:
+      {% for _hostAlias in flightdeck_cluster.web.hostAliases %}
+              - ip: "{{ _hostAlias.ip | default('127.0.0.1') }}"
+                hostnames:
+      {% for _hostname in _hostAlias.hostnames | default(['docker.test']) %}
+                  - "{{ _hostname }}"
+      {% endfor %}
+      {% endfor %}
+      {% endif %}
+      {% if flightdeck_cluster.web.imagePullSecrets is defined %}
+            imagePullSecrets:
+      {% for _imagePullSecret in flightdeck_cluster.web.imagePullSecrets %}
+              - name: "{{ _imagePullSecret }}"
+      {% endfor %}
+      {% endif %}
+      {% if (flightdeck_cluster.web.secrets is defined) or (flightdeck_cluster.web.configMaps is defined) or (flightdeck_cluster.web.volumes is defined) %}
+            volumes:
+      {% for _volume in flightdeck_cluster.web.volumes | default([]) %}
+              - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                persistentVolumeClaim:
+                  claimName: "{{ _volume.name }}"
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.web.secrets | default([]) %}
+              - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                secret:
+                  secretName: "{{ _secret.name }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.web.configMaps | default([]) %}
+              - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                configMap:
+                  name: "{{ _config.name }}"
+      {% endfor %}
+      {% endif %}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+    wait: "{{ flightdeck_cluster.web.wait | default(false) }}"
+    wait_timeout: "{{ flightdeck_cluster.web.timeout | default(300) }}"
+  when:
+    - ansible_version.major >= 2
+    - ansible_version.minor >= 8
+- name: Create web deployment
+  k8s:
+    state: "{{ flightdeck_cluster.web.state | default('present') }}"
+    definition: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        labels:
+          app: web
+        name: web
+      spec:
+        replicas: {{ flightdeck_cluster.web.replicas | default('3') }}
+        selector:
+          matchLabels:
+            app: web
+        strategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxSurge: 1
+            maxUnavailable: 1
+        minReadySeconds: 30
+        template:
+          metadata:
+            labels:
+              app: web
+          spec:
+      {% if (flightdeck_cluster.web.nodeSelector is defined) and (flightdeck_cluster.web.nodeSelector.key is defined) and (flightdeck_cluster.web.nodeSelector.value is defined) %}
+            nodeSelector:
+              {{ flightdeck_cluster.web.nodeSelector.key }}: {{ flightdeck_cluster.web.nodeSelector.value }}
+      {% endif %}
+      {% if flightdeck_cluster.web.env is defined %}
+            env:
+      {% for _env in flightdeck_cluster.web.env | default([]) %}
+              - name: "{{ _env.key }}"
+                value: "{{ _env.value }}"
+      {% endfor %}
+      {% endif %}
+            securityContext:
+              fsGroup: {{ flightdeck_cluster.web.fsGroup | default('1000') }}
+            containers:
+              - image: {{ flightdeck_cluster.web.image | default('ten7/flightdeck-web-7.4') }}
+                imagePullPolicy: {{ flightdeck_cluster.web.imagePullPolicy | default('Always') }}
+                name: web
+                ports:
+                  - containerPort: 80
+      {% if (flightdeck_cluster.web.secrets is defined) or (flightdeck_cluster.web.configMaps is defined) or (flightdeck_cluster.web.volumes is defined) %}
+                volumeMounts:
+      {% for _volume in flightdeck_cluster.web.volumes | default([]) %}
+                  - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                    mountPath: "{{ _volume.path | default('/mnt/' + _volume.name ) }}"
+      {% if _volume.subPath is defined %}
+                    subPath: "{{ _volume.subPath }}"
+      {% endif %}
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.web.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.web.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+      {% endif %}
+              - image: {{ flightdeck_cluster.web.varnish.image | default('ten7/flightdeck-varnish-6.4') }}
+                imagePullPolicy: {{ flightdeck_cluster.web.imagePullPolicy | default('Always') }}
+                name: varnish
+                ports:
+                  - name: "varnish-http"
+                    containerPort: 6081
+                    protocol: TCP
+                  - name: "varnish-control"
+                    containerPort: 6082
+                    protocol: TCP
+                env:
+                  - name: "VARNISH_SECRET"
+                    value: "{{ flightdeck_cluster.web.varnish.secret | default('secret') }}"
+                  - name: "VARNISH_BACKEND_HOST"
+                    value: "localhost"
+                  - name: "VARNISH_BACKEND_PORT"
+                    value: "80"
+                  - name: "VARNISH_MEMORY_SIZE"
+                    value: "{{ flightdeck_cluster.web.varnish.memory | default('256M') }}"
+                  - name: "VARNISH_STORAGE_SIZE"
+                    value: "{{ flightdeck_cluster.web.varnish.storage | default('1024M') }}"
+      {% if (flightdeck_cluster.web.secrets is defined) or (flightdeck_cluster.web.configMaps is defined) %}
+                volumeMounts:
+      {% for _secret in flightdeck_cluster.web.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.web.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+      {% endif %}
+      {% if flightdeck_cluster.web.hostAliases is defined %}
+            hostAliases:
+      {% for _hostAlias in flightdeck_cluster.web.hostAliases %}
+              - ip: "{{ _hostAlias.ip | default('127.0.0.1') }}"
+                hostnames:
+      {% for _hostname in _hostAlias.hostnames | default(['docker.test']) %}
+                  - "{{ _hostname }}"
+      {% endfor %}
+      {% endfor %}
+      {% endif %}
+      {% if flightdeck_cluster.web.imagePullSecrets is defined %}
+            imagePullSecrets:
+      {% for _imagePullSecret in flightdeck_cluster.web.imagePullSecrets %}
+              - name: "{{ _imagePullSecret }}"
+      {% endfor %}
+      {% endif %}
+      {% if (flightdeck_cluster.web.secrets is defined) or (flightdeck_cluster.web.configMaps is defined) or (flightdeck_cluster.web.volumes is defined) %}
+            volumes:
+      {% for _volume in flightdeck_cluster.web.volumes | default([]) %}
+              - name: "{{ _volume.volName | default('vol-pvc-' + _volume.name) }}"
+                persistentVolumeClaim:
+                  claimName: "{{ _volume.name }}"
+      {% endfor %}
+      {% for _secret in flightdeck_cluster.web.secrets | default([]) %}
+              - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                secret:
+                  secretName: "{{ _secret.name }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.web.configMaps | default([]) %}
+              - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                configMap:
+                  name: "{{ _config.name }}"
+      {% endfor %}
+      {% endif %}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+  when:
+    - ansible_version.major >= 2
+    - ansible_version.minor < 8
+- name: Create web service
+  k8s:
+    state: "{{ flightdeck_cluster.web.state | default('present') }}"
+    definition: |
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: web
+      spec:
+        ports:
+          -
+            name: http
+            port: 80
+            protocol: TCP
+          -
+            name: varnish
+            port: 6081
+        selector:
+          app: web
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"

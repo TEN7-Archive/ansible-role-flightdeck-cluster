@@ -1,0 +1,68 @@
+---
+- name: Work with namespaces
+  include_tasks: 'namespace.yml'
+  when:
+    - flightdeck_cluster.namespace is defined
+    - flightdeck_cluster.namespace != 'default'
+- name: Work with volumes
+  include_tasks: 'volumes.yml'
+  when:
+    - flightdeck_cluster.volumes is defined
+- name: Work with secrets
+  include_tasks: 'secrets.yml'
+  when:
+    - flightdeck_cluster.secrets is defined
+- name: Work with configmaps
+  include_tasks: 'configmaps.yml'
+  when:
+    - flightdeck_cluster.configMaps is defined
+- name: Work with mysql
+  include_tasks: 'mysql.yml'
+  when:
+    - flightdeck_cluster.mysql is defined
+- name: Work with tractorbeam
+  include_tasks: 'tractorbeam.yml'
+  when:
+    - flightdeck_cluster.tractorbeam is defined
+- name: Work with memcache
+  include_tasks: 'memcache.yml'
+  when:
+    - flightdeck_cluster.memcache is defined
+- name: Work with solr
+  include_tasks: 'solr.yml'
+  when:
+    - flightdeck_cluster.solr is defined
+- name: Work with web
+  include_tasks: 'web.yml'
+  when:
+    - flightdeck_cluster.web is defined
+- name: Work with ingress controller
+  include_tasks: 'ingressController.yml'
+  when:
+    - flightdeck_cluster.ingressController is defined
+- name: Work with cert manager
+  include_tasks: 'certManager.yml'
+  when:
+    - flightdeck_cluster.certManager is defined
+- name: Work with ingresses
+  include_tasks: 'ingress.yml'
+  loop: "{{ flightdeck_cluster.ingresses | default([_ingress_default]) }}"
+  loop_control:
+    label: "{{ _ingress.name | default('ingress') }}"
+    loop_var: _ingress
+  vars:
+    _ingress_default: "{{ flightdeck_cluster.ingress | default() }}"
+  when:
+    - (flightdeck_cluster.ingress is defined) or (flightdeck_cluster.ingresses is defined)
+- name: Work with cronjobs
+  include_tasks: 'cron.yml'
+  when:
+    - flightdeck_cluster.cron is defined
+- name: Work with gitlab runner
+  include_tasks: 'gitlabRunner.yml'
+  when:
+    - flightdeck_cluster.gitlabRunner is defined
+- name: Work with container registry
+  include_tasks: 'registry.yml'
+  when:
+    - flightdeck_cluster.registry is defined

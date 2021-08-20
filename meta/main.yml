@@ -1,0 +1,24 @@
+galaxy_info:
+  role_name: flightdeck_cluster
+  author: socketwench
+  description: Creates a Flight Deck cluster on Kubernetes
+  company: TEN7
+  license: GPLv3
+  min_ansible_version: 2.8
+  github_branch: main
+  platforms:
+    - name: GenericLinux
+      versions:
+        - all
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+  galaxy_tags:
+    - k8s
+    - kubernetes
+    - cloud
+    - cli
+dependencies: []

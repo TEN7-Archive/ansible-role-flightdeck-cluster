@@ -1,0 +1,20 @@
+---
+- name: Create persistent volume claims
+  k8s:
+    state: "{{ item.state | default('present') }}"
+    definition: |
+      ---
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: {{ item.name }}
+      spec:
+        storageClassName: "{{ item.class | default(omit) }}"
+        accessModes:
+          - {{ item.mode | default('ReadWriteOnce') }}
+        resources:
+          requests:
+            storage: {{ item.size }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+  loop: "{{ flightdeck_cluster.volumes | default([]) }}"

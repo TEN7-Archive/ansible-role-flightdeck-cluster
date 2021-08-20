@@ -1,0 +1,117 @@
+---
+- name: Create solr statefulset
+  k8s:
+    state: "{{ flightdeck_cluster.solr.state | default('present') }}"
+    definition: |
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: solr
+      spec:
+        selector:
+          matchLabels:
+            app: solr
+        serviceName: solr
+        replicas: {{ flightdeck_cluster.solr.replicas | default('1') }}
+        template:
+          metadata:
+            labels:
+              app: solr
+      {% if flightdeck_cluster.solr.annotations is defined %}
+            annotations:
+      {% for _annotation in flightdeck_cluster.solr.annotations | default([]) %}
+              {{ _annotation.key }}: {{ _annotation.value }}
+      {% endfor %}
+      {% endif %}
+          spec:
+      {% if (flightdeck_cluster.solr.nodeSelector is defined) and (flightdeck_cluster.solr.nodeSelector.key is defined) and (flightdeck_cluster.solr.nodeSelector.value is defined) %}
+            nodeSelector:
+              {{ flightdeck_cluster.solr.nodeSelector.key }}: {{ flightdeck_cluster.solr.nodeSelector.value }}
+      {% endif %}
+      {% if (flightdeck_cluster.solr.affinity is defined) %}
+            affinity:
+              {{ flightdeck_cluster.solr.affinity | to_nice_yaml(indent=2) | indent(8) }}
+      {% endif %}
+            initContainers:
+              # The PV is owned by root by default. This means that a non-root container
+              # cannot create directories. So, we change the ownership to the UID/GID of
+              # the account under which the database container runs.
+              - name: "fix-pvc-permissions"
+                image: "alpine"
+                command:
+                  - "sh"
+                  - "-c"
+                  - "chown -R 1000:1000 /data"
+                volumeMounts:
+                  - name: "vol-solr"
+                    mountPath: "/data"
+                    subPath: "solr-data"
+            containers:
+              - image: "{{ flightdeck_cluster.solr.image | default('ten7/flightdeck-solr-8') }}"
+                imagePullPolicy: Always
+                name: "solr"
+      {% if (flightdeck_cluster.solr.resources is defined) %}
+                resources:
+                  {{ flightdeck_cluster.solr.resources | to_nice_yaml(indent=2) | indent(12) }}
+      {% endif %}
+                ports:
+                  - containerPort: 8983
+                    name: solr
+                    protocol: TCP
+                volumeMounts:
+                  - name: "vol-solr"
+                    mountPath: "/data"
+                    subPath: "solr-data"
+      {% for _secret in flightdeck_cluster.solr.secrets | default([]) %}
+                  - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                    mountPath: "{{ _secret.path | default('/secrets') }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.solr.configMaps | default([]) %}
+                  - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                    mountPath: "{{ _config.path | default('/config') }}"
+      {% endfor %}
+      {% if (flightdeck_cluster.solr.secrets is defined) or (flightdeck_cluster.solr.configMaps is defined) %}
+            volumes:
+      {% for _secret in flightdeck_cluster.solr.secrets | default([]) %}
+              - name: "{{ _secret.volName | default('vol-secret-' + _secret.name) }}"
+                secret:
+                  secretName: "{{ _secret.name }}"
+      {% endfor %}
+      {% for _config in flightdeck_cluster.solr.configMaps | default([]) %}
+              - name: "{{ _config.volName | default('vol-config-' + _config.name) }}"
+                configMap:
+                  name: "{{ _config.name }}"
+      {% endfor %}
+      {% endif %}
+        volumeClaimTemplates:
+          - metadata:
+              name: vol-solr
+            spec:
+              accessModes:
+                - {{ flightdeck_cluster.solr.mode | default('ReadWriteOnce') }}
+      {% if flightdeck_cluster.solr.storageClass is defined %}
+              storageClassName: "{{ flightdeck_cluster.solr.storageClass }}"
+      {% endif %}
+              resources:
+                requests:
+                  storage: {{ flightdeck_cluster.solr.size | default('10Gi') }}
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+- name: Create solr service
+  k8s:
+    state: "{{ flightdeck_cluster.solr.state | default('present') }}"
+    definition: |
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: solr
+      spec:
+        clusterIP: None
+        ports:
+          - name: solr
+            port: 8983
+            protocol: TCP
+        selector:
+          app: solr
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
