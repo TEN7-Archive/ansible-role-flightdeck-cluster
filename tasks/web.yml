@@ -51,7 +51,7 @@
             app: web
       {% if flightdeck_cluster.web.strategy is defined %}
         strategy:
-          {{ flightdeck_cluster.web.affinity | to_nice_yaml(indent=2) | indent(4) }}
+          {{ flightdeck_cluster.web.strategy | to_nice_yaml(indent=2) | indent(4) }}
       {% else %}
         strategy:
           type: RollingUpdate

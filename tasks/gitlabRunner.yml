@@ -34,7 +34,7 @@
       rules:
         - apiGroups: [""]
           resources: ["pods", "pods/exec", "pods/attach", "secrets", "configmaps"]
-          verbs: ["get", "list", "watch", "create", "patch", "delete"]
+          verbs: ["get", "list", "watch", "create", "patch", "delete", "update"]
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace }}"
 - name: Create role binding gitlab-runner
