@@ -257,6 +257,9 @@
                   - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
                   - --publish-service=$(POD_NAMESPACE)/{{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
                   - --annotations-prefix=nginx.ingress.kubernetes.io
+      {% for _arg in flightdeck_cluster.ingressController.extraArgs | default([]) %}
+                  - --{{ _arg.key }}={{ _arg.value }}
+      {% endfor %}
                 securityContext:
                   allowPrivilegeEscalation: true
                   capabilities:
@@ -315,6 +318,12 @@
         labels:
           app.kubernetes.io/name: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
           app.kubernetes.io/part-of: {{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
+      {% if flightdeck_cluster.ingressController.annotations is defined %}
+        annotations:
+      {% for _annotation in flightdeck_cluster.ingressController.annotations | default([]) %}
+          {{ _annotation.key }}: {{ _annotation.value }}
+      {% endfor %}
+      {% endif %}
       spec:
         externalTrafficPolicy: Local
         type: LoadBalancer
