@@ -41,7 +41,8 @@
   when:
     - flightdeck_cluster.ingressController is defined
 - name: Work with cert manager
-  include_tasks: 'certManager.yml'
+  debug:
+    msg: "Cert Manager installation in FDC is no longer supported. Please use Cert Manager's own installation methods!"
   when:
     - flightdeck_cluster.certManager is defined
 - name: Work with ingresses
