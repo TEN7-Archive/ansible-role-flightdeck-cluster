@@ -516,6 +516,12 @@ flightdeck_cluster:
         value: "301"
     tcpConfig: []
     udpConfig: []
+    extraArgs:
+      - key: "default-ssl-certificate"
+        value: "production/website-letsencrypt-key"
+    annotations:
+      - key: "service.beta.kubernetes.io/do-loadbalancer-hostname"
+        value: digitaloceancluster.example.com
 ```
 
 Where:
@@ -525,7 +531,9 @@ Where:
 * **ports** is a list of external port mappings, including a `name`, the `port` number, and the `targetPort` name. Optional, defaults to exposing the default HTTP and HTTPS ports.
 * **config** is a list of configuration options for the controller. Each item has a `name`, and a `value`. See the [Ingress Nginx docs](https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/nginx-configuration/configmap.md) for a complete list. Optional.
 * **tcpConfig** is like **config**, but only for TCP based services. Optional.
-* **udpCOnfig** is like **config**, but only for UDP based services. Optional.
+* **udpConfig** is like **config**, but only for UDP based services. Optional.
+* **extraArgs** allows passing additional [command-line arguments](https://kubernetes.github.io/ingress-nginx/user-guide/cli-arguments/) to the NGINX Ingress Controller. Optional.
+* **annotations** allows passing annotations to the NGINX Ingress Controller. In the sample configuration, DigitalOcean Kubernetes is configured to make load balancer resolution from inside the network functional. Optional.
 
 ### Cron
 
