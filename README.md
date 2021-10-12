@@ -326,6 +326,7 @@ Where:
 * **dailySchedule** is the crontab formatted schedule on which to run the daily backup. Optional. Defaults to 12am UTC every day.
 * **weeklySchedule** is the crontab formatted schedule on which to run the weekly backup. Optional. Defaults to 2am URT every Sunday.
 * **monthlySchedule** is the crontab formatted schedule on which to run the monthly backup. Optional. Defaults to 4am UTC on the first of each month.
+* **restartPolicy** specifies whether the same pod should be reused if the job fails. Optional. Set this to `Never` to preserve logs when debugging.
 * **secrets** are the secrets to mount in the container. Optional. Works like the `web` service.
 * **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.
 
@@ -557,7 +558,7 @@ cron:
 ```
 
 Where:
-* **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.tractorbeam` is defined.
+* **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.cron` is defined.
 * **image** is the image to use for the backup cronjobs. Optional, defaults to `ten7/tractorbeam:latest`.
 * **nodeSelector** is the key/value pair to use to place the pod in the cluster. Optional, works like the `web` service.
 * **affinity** is the node affinity to place the pod in the cluster. Optional, works like the `web` service.
@@ -566,6 +567,7 @@ Where:
 * **command** is the command (entrypoint) to run in the pod. Optional.
 * **args** are the arguments to pass to the command. Optional.
 * **concurrencyPolicy** specifies if the cronjob can be run multiple times concurrently. Optional. False by default (opposite k8s' default).
+* **restartPolicy** specifies what to do if the run fails. Optional, works like `tractorbeam` above.
 * **suspend** specifies if the cronjob is disabled. Optional. Defaults to false (enabled).
 * **secrets** are the secrets to mount in the container. Optional. Works like the `web` service.
 * **configMaps** are the configMaps to mount in the container. Optional. Works like the `web` service.

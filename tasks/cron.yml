@@ -64,7 +64,7 @@
                         mountPath: "{{ _config.path | default('/config') }}"
       {% endfor %}
       {% endif %}
-                restartPolicy: OnFailure
+                restartPolicy: "{{ item.restartPolicy | default('OnFailure') }}"
       {% if item.imagePullSecrets is defined %}
                 imagePullSecrets:
       {% for _imagePullSecret in item.imagePullSecrets %}

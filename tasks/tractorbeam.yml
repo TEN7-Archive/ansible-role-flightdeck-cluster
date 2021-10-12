@@ -79,7 +79,7 @@
                         mountPath: "{{ _config.path | default('/config') }}"
       {% endfor %}
       {% endif %}
-                restartPolicy: OnFailure
+                restartPolicy: "{{ flightdeck_cluster.tractorbeam.restartPolicy | default('OnFailure') }}"
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                 volumes:
       {% if flightdeck_cluster.tractorbeam.size | default(false) != false %}
@@ -161,7 +161,7 @@
                         mountPath: "{{ _config.path | default('/config') }}"
       {% endfor %}
       {% endif %}
-                restartPolicy: OnFailure
+                restartPolicy: "{{ flightdeck_cluster.tractorbeam.restartPolicy | default('OnFailure') }}"
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                 volumes:
       {% if flightdeck_cluster.tractorbeam.size | default(false) != false %}
@@ -243,7 +243,7 @@
                         mountPath: "{{ _config.path | default('/config') }}"
       {% endfor %}
       {% endif %}
-                restartPolicy: OnFailure
+                restartPolicy: "{{ flightdeck_cluster.tractorbeam.restartPolicy | default('OnFailure') }}"
       {% if (flightdeck_cluster.tractorbeam.secrets is defined) or (flightdeck_cluster.tractorbeam.configMaps is defined) or (flightdeck_cluster.tractorbeam.size is defined) %}
                 volumes:
       {% if flightdeck_cluster.tractorbeam.size | default(false) != false %}
