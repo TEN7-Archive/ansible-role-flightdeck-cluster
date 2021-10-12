@@ -558,8 +558,8 @@ cron:
 ```
 
 Where:
-* **state** specifies if the backup service is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.cron` is defined.
-* **image** is the image to use for the backup cronjobs. Optional, defaults to `ten7/tractorbeam:latest`.
+* **state** specifies if the cronjob is `present` or `absent`. Optional, defaults to `present` when `flightdeck_cluster.cron` is defined.
+* **image** is the image to use for the cronjob. Optional, defaults to `ten7/tractorbeam:latest`.
 * **nodeSelector** is the key/value pair to use to place the pod in the cluster. Optional, works like the `web` service.
 * **affinity** is the node affinity to place the pod in the cluster. Optional, works like the `web` service.
 * **resources** is the container physical resource requests and limits. Optional, works like the `web` service.
