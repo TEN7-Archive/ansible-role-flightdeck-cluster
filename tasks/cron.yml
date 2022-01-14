@@ -46,6 +46,13 @@
                       - "{{ _arg }}"
       {% endfor %}
       {% endif %}
+      {% if item.env is defined %}
+                    env:
+      {% for _env in item.env | default([]) %}
+                      - name: "{{ _env.key }}"
+                        value: "{{ _env.value }}"
+      {% endfor %}
+      {% endif %}
       {% if (item.secrets is defined) or (item.configMaps is defined)  or (item.volumes is defined) %}
                     volumeMounts:
       {% for _volume in item.volumes | default([]) %}
