@@ -125,7 +125,7 @@
       {% if flightdeck_cluster.web.env is defined %}
                 env:
       {% for _env in flightdeck_cluster.web.env | default([]) %}
-                  - name: "{{ _env.key }}"
+                  - name: "{{ _env.name }}"
                     value: "{{ _env.value }}"
       {% endfor %}
       {% endif %}
@@ -266,7 +266,7 @@
       {% if flightdeck_cluster.web.env is defined %}
                 env:
       {% for _env in flightdeck_cluster.web.env | default([]) %}
-                  - name: "{{ _env.key }}"
+                  - name: "{{ _env.name }}"
                     value: "{{ _env.value }}"
       {% endfor %}
       {% endif %}

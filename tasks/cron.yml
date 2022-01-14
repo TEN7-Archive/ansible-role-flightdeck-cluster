@@ -49,7 +49,7 @@
       {% if item.env is defined %}
                     env:
       {% for _env in item.env | default([]) %}
-                      - name: "{{ _env.key }}"
+                      - name: "{{ _env.name }}"
                         value: "{{ _env.value }}"
       {% endfor %}
       {% endif %}
