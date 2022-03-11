@@ -27,7 +27,7 @@
               {{ flightdeck_cluster.memcache.affinity | to_nice_yaml(indent=2) | indent(8) }}
       {% endif %}
             containers:
-              - image: "{{ flightdeck_cluster.memcache.image | default('memcached:1.6-alpine') }}"
+              - image: "{{ flightdeck_cluster.memcache.image | default('ten7/flightdeck-memcache-1.6') }}"
                 imagePullPolicy: Always
                 name: "memcache"
       {% if (flightdeck_cluster.memcache.resources is defined) %}

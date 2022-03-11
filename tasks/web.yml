@@ -147,7 +147,7 @@
                     mountPath: "{{ _config.path | default('/config') }}"
       {% endfor %}
       {% endif %}
-              - image: {{ flightdeck_cluster.web.varnish.image | default('ten7/flightdeck-varnish-6.4') }}
+              - image: {{ flightdeck_cluster.web.varnish.image | default('ten7/flightdeck-varnish-6') }}
                 imagePullPolicy: {{ flightdeck_cluster.web.imagePullPolicy | default('Always') }}
                 name: varnish
       {% if (flightdeck_cluster.web.varnishResources is defined) %}
