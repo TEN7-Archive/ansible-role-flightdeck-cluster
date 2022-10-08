@@ -1,4 +1,4 @@
-#
+# https://github.com/kubernetes/ingress-nginx/blob/main/docs/deploy/index.md
 # @see https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
 #
 ---
@@ -76,7 +76,7 @@
   k8s:
     state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
     definition: |
-      apiVersion: rbac.authorization.k8s.io/v1beta1
+      apiVersion: rbac.authorization.k8s.io/v1
       kind: ClusterRole
       metadata:
         name: nginx-ingress-clusterrole
@@ -110,7 +110,7 @@
             - list
             - watch
         - apiGroups:
-            - "extensions"
+            - networking.k8s.io
           resources:
             - ingresses
           verbs:
@@ -125,17 +125,33 @@
             - create
             - patch
         - apiGroups:
-            - "extensions"
+            - networking.k8s.io
           resources:
             - ingresses/status
           verbs:
             - update
+        - apiGroups:
+            - networking.k8s.io
+          resources:
+            - ingressclasses
+          verbs:
+            - get
+            - list
+            - watch
+        - apiGroups:
+            - discovery.k8s.io
+          resources:
+            - endpointslices
+          verbs:
+            - list
+            - watch
+            - get
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
 - name: Create ingress role
   k8s:
     state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
     definition: |
-      apiVersion: rbac.authorization.k8s.io/v1beta1
+      apiVersion: rbac.authorization.k8s.io/v1
       kind: Role
       metadata:
         name: nginx-ingress-role
@@ -183,7 +199,7 @@
   k8s:
     state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
     definition: |
-      apiVersion: rbac.authorization.k8s.io/v1beta1
+      apiVersion: rbac.authorization.k8s.io/v1
       kind: RoleBinding
       metadata:
         name: nginx-ingress-role-nisa-binding
@@ -204,7 +220,7 @@
   k8s:
     state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
     definition: |
-      apiVersion: rbac.authorization.k8s.io/v1beta1
+      apiVersion: rbac.authorization.k8s.io/v1
       kind: ClusterRoleBinding
       metadata:
         name: nginx-ingress-clusterrole-nisa-binding
@@ -257,6 +273,7 @@
                   - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
                   - --publish-service=$(POD_NAMESPACE)/{{ flightdeck_cluster.ingressController.name | default ('nginx-ingress')  }}
                   - --annotations-prefix=nginx.ingress.kubernetes.io
+                  - --ingress-class=nginx
       {% for _arg in flightdeck_cluster.ingressController.extraArgs | default([]) %}
                   - --{{ _arg.key }}={{ _arg.value }}
       {% endfor %}
@@ -304,8 +321,26 @@
                   timeoutSeconds: 10
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
-#
-# @see https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/cloud-generic.yaml
+- name: Create Ingress Class
+  k8s:
+    state: "{{ flightdeck_cluster.ingressController.state | default('present') }}"
+    definition: |
+      apiVersion: networking.k8s.io/v1
+      kind: IngressClass
+      metadata:
+        labels:
+          app.kubernetes.io/component: controller
+          app.kubernetes.io/instance: ingress-nginx
+          app.kubernetes.io/name: ingress-nginx
+          app.kubernetes.io/part-of: ingress-nginx
+          app.kubernetes.io/version: 1.4.0
+        name: nginx
+      spec:
+        controller: k8s.io/ingress-nginx
+    kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
+    namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
+# https://github.com/kubernetes/ingress-nginx/blob/main/docs/deploy/index.md
+# @see https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud-generic.yaml
 #
 - name: Create ingress service
   k8s:
