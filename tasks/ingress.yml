@@ -73,8 +73,10 @@
       {% endif %}
       {% if _ingress.default is defined %}
         backend:
-          serviceName: "{{ _ingress.default.backend | default('web') }}"
-          servicePort: {{ _ingress.default.port | default('6081') }}
+          service:
+            name: "{{ _ingress.default.backend | default('web') }}"
+            port: 
+              number: {{ _ingress.default.port | default('6081') }}
       {% endif %}
     kubeconfig: "{{ flightdeck_cluster_kubeconfig | default(omit) }}"
     namespace: "{{ flightdeck_cluster.namespace | default('default') }}"
