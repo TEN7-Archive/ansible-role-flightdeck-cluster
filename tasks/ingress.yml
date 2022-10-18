@@ -65,8 +65,10 @@
                 - path: "{{ _path.path | default('/') }}"
                   pathType: "{{ _path.pathType | default('ImplementationSpecific') }}"
                   backend:
-                    serviceName: "{{ _path.backend | default('web') }}"
-                    servicePort: {{ _path.port | default('6081') }}
+                    service:
+                      name: "{{ _path.backend | default('web') }}"
+                      port: 
+                        number: {{ _path.port | default('6081') }}
       {% endfor %}
       {% endif %}
       {% endfor %}
