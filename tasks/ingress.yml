@@ -23,6 +23,12 @@
       {% if _ingress.rewriteTarget is defined %}
           nginx.ingress.kubernetes.io/rewrite-target: "{{ _ingress.rewriteTarget }}"
       {% endif %}
+      {% if _ingress.hsts is defined %}
+          nginx.org/hsts: "true"
+          nginx.org/hsts-include-subdomains: "{{ _ingress.hsts.includeSubDomains | default(false) | ternary('true', 'false') }}"
+          nginx.org/hsts-max-age: "{{ _ingress.hsts.maxAge | default('31536000') }}"
+          nginx.org/hsts-preload: "{{ _ingress.hsts.preload | default(false) | ternary('true', 'false') }}"
+      {% endif %}
       {% if _ingress.auth is defined %}
           nginx.ingress.kubernetes.io/auth-type: "{{ _ingress.auth.type | default('basic') }}"
           nginx.ingress.kubernetes.io/auth-secret: "{{ _ingress.auth.secret }}"
