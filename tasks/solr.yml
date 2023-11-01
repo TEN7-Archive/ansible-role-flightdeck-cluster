@@ -43,7 +43,7 @@
                   - "-c"
                   - "chown -R 1000:1000 /data"
                 volumeMounts:
-                  - name: "vol-solr"
+                  - name: "{{ flightdeck_cluster.solr.volumeClaimTemplateName | default('vol-solr') }}"
                     mountPath: "/data"
                     subPath: "solr-data"
             containers:
@@ -59,7 +59,7 @@
                     name: solr
                     protocol: TCP
                 volumeMounts:
-                  - name: "vol-solr"
+                  - name: "{{ flightdeck_cluster.solr.volumeClaimTemplateName | default('vol-solr') }}"
                     mountPath: "/data"
                     subPath: "solr-data"
       {% for _secret in flightdeck_cluster.solr.secrets | default([]) %}
@@ -85,7 +85,7 @@
       {% endif %}
         volumeClaimTemplates:
           - metadata:
-              name: vol-solr
+              name: {{ flightdeck_cluster.solr.volumeClaimTemplateName | default('vol-solr') }}
             spec:
               accessModes:
                 - {{ flightdeck_cluster.solr.mode | default('ReadWriteOnce') }}
